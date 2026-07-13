@@ -1,0 +1,12 @@
+export const ETAPAS = [
+  "AVALIAÇÃO",
+  "EM TRATAMENTO",
+  "IMPLANTE",
+  "PROVISÓRIO",
+  "REABERTURA",
+  "MOLDAGEM",
+  "PROVA",
+  "ENTREGA",
+  "AJUSTES",
+  "FINALIZADO",
+];
