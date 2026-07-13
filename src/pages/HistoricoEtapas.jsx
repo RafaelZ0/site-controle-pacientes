@@ -4,8 +4,10 @@ import { ETAPAS } from "../lib/constants";
 
 const formInicial = { dentista_id: "", data: "", observacao: "" };
 
-export default function HistoricoEtapas({ pacienteId, dentistas, dentistaPadrao }) {
+export default function HistoricoEtapas({ pacienteId }) {
   const [historico, setHistorico] = useState([]);
+  const [dentistas, setDentistas] = useState([]);
+  const [dentistaPadrao, setDentistaPadrao] = useState("");
   const [error, setError] = useState(null);
   const [aberto, setAberto] = useState(null); // { etapa, entryId } | null
   const [form, setForm] = useState(formInicial);
@@ -22,6 +24,20 @@ export default function HistoricoEtapas({ pacienteId, dentistas, dentistaPadrao 
   }
 
   useEffect(() => {
+    supabase
+      .from("dentistas")
+      .select("id, nome")
+      .eq("ativo", true)
+      .order("nome")
+      .then(({ data }) => setDentistas(data ?? []));
+
+    supabase
+      .from("pacientes")
+      .select("dentista_id")
+      .eq("id", pacienteId)
+      .single()
+      .then(({ data }) => setDentistaPadrao(data?.dentista_id ?? ""));
+
     carregar();
   }, [pacienteId]);
 

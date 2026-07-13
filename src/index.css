@@ -109,11 +109,33 @@ h3 {
   height: 100vh;
 }
 
+.sidebar-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .sidebar-brand {
   color: var(--text-inverse);
   font-size: 1.3rem;
   line-height: 1.35;
   margin-bottom: 2.5rem;
+}
+
+.menu-toggle {
+  display: none;
+  flex-shrink: 0;
+  width: 40px;
+  padding: 0;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.18);
+  color: var(--text-inverse);
+}
+
+.menu-toggle:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.4);
+  color: var(--text-inverse);
 }
 
 .sidebar-nav {
@@ -695,4 +717,167 @@ button:disabled {
 
 .modal-aviso strong {
   color: var(--text-primary);
+}
+
+/* Tela de edição: abas Dados cadastrais / Status do tratamento */
+.paciente-editar h2 {
+  margin-bottom: 1rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 1.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+
+.tabs button {
+  height: 42px;
+  padding: 0 0.1rem;
+  border: none;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.tabs button:hover:not(:disabled) {
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+
+.tabs button.ativo {
+  color: var(--blue-600);
+  border-color: var(--blue-600);
+}
+
+.paciente-status {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.paciente-status .historico-etapas,
+.paciente-status .consultas-parcelas {
+  margin-top: 0;
+  max-width: 720px;
+}
+
+/* =========================================================
+   Responsivo (tablet/mobile)
+   ========================================================= */
+@media (max-width: 860px) {
+  .app-shell {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    flex-direction: column;
+    padding: 0.85rem 1rem;
+  }
+
+  .sidebar-brand {
+    font-size: 1.05rem;
+    margin-bottom: 0;
+  }
+
+  .menu-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sidebar-nav,
+  .sidebar-footer {
+    display: none;
+  }
+
+  .sidebar.menu-aberto .sidebar-nav {
+    display: flex;
+    margin-top: 1rem;
+  }
+
+  .sidebar.menu-aberto .sidebar-footer {
+    display: flex;
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+  }
+
+  .app-main {
+    padding: 1.25rem 1rem;
+  }
+
+  .cp-columns {
+    gap: 1.25rem;
+  }
+}
+
+@media (max-width: 640px) {
+  h2 {
+    font-size: 1.25rem;
+  }
+
+  .login-page {
+    padding: 1rem;
+  }
+
+  .login-form {
+    width: 100%;
+    padding: 1.75rem;
+  }
+
+  .paciente-form,
+  .card {
+    padding: 1.25rem;
+    max-width: 100%;
+  }
+
+  .filtros {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filtros input,
+  .filtros select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .pacientes-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pacientes-table {
+    min-width: 720px;
+  }
+
+  .cp-table {
+    min-width: 0;
+  }
+
+  .etapa-registro,
+  .etapa-form {
+    padding-left: 1.1rem;
+  }
+
+  .modal-card {
+    padding: 1.5rem;
+  }
+
+  .form-actions {
+    flex-wrap: wrap;
+  }
+
+  .form-actions button {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .tabs {
+    gap: 1rem;
+  }
 }

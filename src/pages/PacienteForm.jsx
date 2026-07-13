@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
-import ConsultasParcelas from "./ConsultasParcelas";
-import HistoricoEtapas from "./HistoricoEtapas";
 import ExcluirPacienteModal from "./ExcluirPacienteModal";
 
 function mensagemErro(error) {
@@ -188,7 +186,7 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
   return (
     <>
     <form className="paciente-form" onSubmit={handleSubmit}>
-      <h2>{isEdit ? "Editar paciente" : "Novo paciente"}</h2>
+      {!isEdit && <h2>Novo paciente</h2>}
 
       <label>
         Nome completo
@@ -359,15 +357,6 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
         </div>
       )}
     </form>
-
-    {isEdit && (
-      <HistoricoEtapas
-        pacienteId={pacienteId}
-        dentistas={dentistas}
-        dentistaPadrao={form.dentista_id}
-      />
-    )}
-    {isEdit && <ConsultasParcelas pacienteId={pacienteId} />}
 
     {mostrarExcluir && (
       <ExcluirPacienteModal
