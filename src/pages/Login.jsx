@@ -19,37 +19,45 @@ export default function Login() {
 
   return (
     <div className="login-page">
-      <form className="login-form" onSubmit={handleSubmit}>
-        <h1 className="wordmark">Instituto Dr. Pablo Santos</h1>
-        <p className="subtitle">Controle de pacientes</p>
+      <div className="login-brand-panel">
+        <img src="/logo.png" alt="" className="login-brand-logo" />
+        <p className="login-brand-nome wordmark">
+          Instituto Odontológico Dr. Pablo Santos
+        </p>
+      </div>
 
-        <label>
-          E-mail
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoFocus
-          />
-        </label>
+      <div className="login-form-panel">
+        <form className="login-form" onSubmit={handleSubmit}>
+          <p className="subtitle">Controle de pacientes</p>
 
-        <label>
-          Senha
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </label>
+          <label>
+            E-mail
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoFocus
+            />
+          </label>
 
-        {error && <p className="error">{error}</p>}
+          <label>
+            Senha
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </label>
 
-        <button type="submit" disabled={loading}>
-          {loading ? "Entrando..." : "Entrar"}
-        </button>
-      </form>
+          {error && <p className="error">{error}</p>}
+
+          <button type="submit" disabled={loading}>
+            {loading ? "Entrando..." : "Entrar"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
+import { iniciais } from "../lib/avatar";
 import PacienteForm from "./PacienteForm";
 import HistoricoEtapas from "./HistoricoEtapas";
 import ConsultasParcelas from "./ConsultasParcelas";
@@ -19,7 +20,10 @@ export default function PacienteEditar({ pacienteId, onSaved, onCancel }) {
 
   return (
     <div className="paciente-editar">
-      <h2>{nome || "Editar paciente"}</h2>
+      <div className="paciente-editar-header">
+        {nome && <span className="avatar avatar-lg">{iniciais(nome)}</span>}
+        <h2>{nome || "Editar paciente"}</h2>
+      </div>
 
       <div className="tabs">
         <button

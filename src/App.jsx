@@ -1,34 +1,10 @@
 import { useState } from "react";
+import { Users, UserPlus, Menu } from "lucide-react";
 import { useAuth } from "./lib/AuthContext";
 import Login from "./pages/Login";
 import Busca from "./pages/Busca";
 import PacienteForm from "./pages/PacienteForm";
 import PacienteEditar from "./pages/PacienteEditar";
-
-const IconPacientes = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="4" y="3" width="16" height="18" rx="2" />
-    <line x1="8" y1="8" x2="16" y2="8" />
-    <line x1="8" y1="12" x2="16" y2="12" />
-    <line x1="8" y1="16" x2="13" y2="16" />
-  </svg>
-);
-
-const IconNovo = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="9" />
-    <line x1="12" y1="8" x2="12" y2="16" />
-    <line x1="8" y1="12" x2="16" y2="12" />
-  </svg>
-);
-
-const IconMenu = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="4" y1="7" x2="20" y2="7" />
-    <line x1="4" y1="12" x2="20" y2="12" />
-    <line x1="4" y1="17" x2="20" y2="17" />
-  </svg>
-);
 
 export default function App() {
   const { session, loading, signOut } = useAuth();
@@ -56,7 +32,7 @@ export default function App() {
           className={view.name === "busca" || view.name === "editar" ? "ativo" : ""}
           onClick={irParaBusca}
         >
-          <IconPacientes />
+          <Users size={18} strokeWidth={1.75} />
           Pacientes
         </button>
         <button
@@ -64,7 +40,7 @@ export default function App() {
           className={view.name === "novo" ? "ativo" : ""}
           onClick={irParaNovo}
         >
-          <IconNovo />
+          <UserPlus size={18} strokeWidth={1.75} />
           Novo paciente
         </button>
       </nav>
@@ -88,8 +64,9 @@ export default function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="sidebar-top">
-          <div className="sidebar-brand wordmark">
-            Instituto Odontológico Dr. Pablo Santos
+          <div className="sidebar-brand">
+            <img src="/logo.png" alt="" className="sidebar-logo" />
+            <span className="wordmark">Instituto Odontológico Dr. Pablo Santos</span>
           </div>
           <button
             type="button"
@@ -97,7 +74,7 @@ export default function App() {
             onClick={() => setMenuAberto((v) => !v)}
             aria-label="Abrir menu"
           >
-            <IconMenu />
+            <Menu size={20} strokeWidth={1.75} />
           </button>
         </div>
 

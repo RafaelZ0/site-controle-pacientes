@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
+import { Search } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { ETAPAS } from "../lib/constants";
+import { iniciais } from "../lib/avatar";
+import ResumoCards from "./ResumoCards";
 
 export default function Busca({ onEditPaciente }) {
   const [dentistas, setDentistas] = useState([]);
@@ -52,6 +55,8 @@ export default function Busca({ onEditPaciente }) {
     <div className="busca-page">
       <h2>Pacientes</h2>
 
+      <ResumoCards />
+
       <div className="filtros">
         <select value={dentistaId} onChange={(e) => setDentistaId(e.target.value)}>
           <option value="">Todos os dentistas</option>
@@ -99,7 +104,12 @@ export default function Busca({ onEditPaciente }) {
           <tbody>
             {pacientes.map((p) => (
               <tr key={p.id}>
-                <td>{p.nome_completo}</td>
+                <td>
+                  <div className="paciente-nome-cell">
+                    <span className="avatar">{iniciais(p.nome_completo)}</span>
+                    {p.nome_completo}
+                  </div>
+                </td>
                 <td>{p.dentista_nome}</td>
                 <td>
                   <span className="badge badge-neutro">{p.etapa_atual}</span>
@@ -123,17 +133,7 @@ export default function Busca({ onEditPaciente }) {
               <tr>
                 <td colSpan={8} className="estado-vazio">
                   <div className="estado-vazio-conteudo">
-                    <svg
-                      width="28"
-                      height="28"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    >
-                      <circle cx="11" cy="11" r="7" />
-                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                    </svg>
+                    <Search size={28} strokeWidth={1.5} />
                     <span>Nenhum paciente encontrado.</span>
                   </div>
                 </td>

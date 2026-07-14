@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Phone, IdCard, Calendar } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import ExcluirPacienteModal from "./ExcluirPacienteModal";
 
@@ -199,7 +200,10 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
       </label>
 
       <label>
-        Telefone (opcional)
+        <span className="label-texto">
+          <Phone size={14} strokeWidth={1.75} />
+          Telefone (opcional)
+        </span>
         <input
           type="text"
           value={form.telefone}
@@ -208,7 +212,10 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
       </label>
 
       <label>
-        CPF (opcional)
+        <span className="label-texto">
+          <IdCard size={14} strokeWidth={1.75} />
+          CPF (opcional)
+        </span>
         <input
           type="text"
           value={form.cpf}
@@ -235,7 +242,10 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
       </label>
 
       <label>
-        Data de início
+        <span className="label-texto">
+          <Calendar size={14} strokeWidth={1.75} />
+          Data de início
+        </span>
         <input
           type="date"
           value={form.data_inicio}

@@ -1,14 +1,9 @@
 import { useEffect, useState } from "react";
+import { Check, Calendar } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { ETAPAS } from "../lib/constants";
 
 const formInicial = { dentista_id: "", data: "", observacao: "" };
-
-const CheckIcon = () => (
-  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-);
 
 export default function HistoricoEtapas({ pacienteId }) {
   const [historico, setHistorico] = useState([]);
@@ -123,10 +118,24 @@ export default function HistoricoEtapas({ pacienteId }) {
     ? historico.filter((h) => h.etapa === modalEtapa)
     : [];
 
+  const etapasRegistradas = new Set(historico.map((h) => h.etapa)).size;
+
   return (
     <div className="historico-etapas">
       <h3>Etapas do tratamento</h3>
       {error && <p className="error">{error}</p>}
+
+      <div className="etapas-progresso">
+        <div className="etapas-progresso-trilho">
+          <div
+            className="etapas-progresso-preenchido"
+            style={{ width: `${(etapasRegistradas / ETAPAS.length) * 100}%` }}
+          />
+        </div>
+        <span className="etapas-progresso-texto">
+          {etapasRegistradas} de {ETAPAS.length} etapas registradas
+        </span>
+      </div>
 
       <div className="etapas-chips">
         {ETAPAS.map((etapa) => {
@@ -142,7 +151,7 @@ export default function HistoricoEtapas({ pacienteId }) {
               className={`etapa-chip ${temRegistro ? "concluida" : ""} ${isAtual ? "atual" : ""}`}
               onClick={() => abrirModal(etapa)}
             >
-              {temRegistro && <CheckIcon />}
+              {temRegistro && <Check size={13} strokeWidth={3} />}
               <span className="etapa-chip-texto">
                 <span className="etapa-chip-nome">{etapa}</span>
                 {temRegistro && (
@@ -222,7 +231,10 @@ export default function HistoricoEtapas({ pacienteId }) {
                 </label>
 
                 <label>
-                  Data
+                  <span className="label-texto">
+                    <Calendar size={14} strokeWidth={1.75} />
+                    Data
+                  </span>
                   <input
                     type="date"
                     value={form.data}
