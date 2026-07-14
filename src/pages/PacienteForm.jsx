@@ -146,11 +146,14 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
         setError(mensagemErro(error));
         return;
       }
-      // Toda ficha nova começa em AVALIAÇÃO no histórico de etapas.
+      // Toda ficha nova começa em AVALIAÇÃO, na data de início do tratamento
+      // (não na data de hoje, pra não distorcer o histórico de quem cadastra
+      // um paciente que já começou antes).
       await supabase.from("historico_etapas").insert({
         paciente_id: data.id,
         etapa: "AVALIAÇÃO",
         dentista_id: payload.dentista_id,
+        data: payload.data_inicio,
       });
     }
 
