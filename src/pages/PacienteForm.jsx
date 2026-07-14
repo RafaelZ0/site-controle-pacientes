@@ -18,15 +18,9 @@ const initialForm = {
   data_inicio: "",
   num_parcelas: "",
   num_consultas: "",
-  consulta_implante_numero: "",
 };
 
-const CAMPOS_CRITICOS = [
-  "data_inicio",
-  "num_parcelas",
-  "num_consultas",
-  "consulta_implante_numero",
-];
+const CAMPOS_CRITICOS = ["data_inicio", "num_parcelas", "num_consultas"];
 
 export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
   const [dentistas, setDentistas] = useState([]);
@@ -79,7 +73,6 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
           data_inicio: data.data_inicio,
           num_parcelas: data.num_parcelas,
           num_consultas: data.num_consultas,
-          consulta_implante_numero: data.consulta_implante_numero ?? "",
         };
         setForm(carregado);
         setInitialCriticos(
@@ -122,9 +115,6 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
       data_inicio: form.data_inicio,
       num_parcelas: Number(form.num_parcelas),
       num_consultas: Number(form.num_consultas),
-      consulta_implante_numero: form.consulta_implante_numero
-        ? Number(form.consulta_implante_numero)
-        : null,
     };
 
     if (isEdit) {
@@ -276,18 +266,6 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
         />
       </label>
 
-      <label>
-        Consulta do implante (opcional)
-        <input
-          type="number"
-          min="1"
-          max={form.num_consultas || undefined}
-          value={form.consulta_implante_numero}
-          onChange={(e) => updateField("consulta_implante_numero", e.target.value)}
-          placeholder="Deixe em branco se não há implante"
-        />
-      </label>
-
       {error && <p className="error">{error}</p>}
       {info && <p className="info">{info}</p>}
 
@@ -333,9 +311,9 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
         <div className="regenerar-plano">
           <p>
             O botão acima já recalcula sozinho as consultas/parcelas em
-            aberto quando você muda início, nº de parcelas, nº de consultas
-            ou a consulta do implante — preservando o que já foi
-            realizado/pago. Se em vez disso você quiser <strong>apagar e
+            aberto quando você muda início, nº de parcelas ou nº de
+            consultas — preservando o que já foi realizado/pago. Se em vez
+            disso você quiser <strong>apagar e
             recriar o plano inteiro do zero</strong> (perde marcações de
             realizado/pago), use o botão abaixo.
           </p>
