@@ -714,6 +714,32 @@ button:disabled {
   cursor: pointer;
 }
 
+.etapas-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.checkbox-linha {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 400;
+  color: var(--text-primary);
+}
+
+.checkbox-linha input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
 .check-touch {
   display: inline-flex;
   align-items: center;

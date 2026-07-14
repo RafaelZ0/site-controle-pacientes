@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
+import { ETAPAS } from "../lib/constants";
 
 const STATUS_LABEL = {
   "EM ATRASO": "em atraso",
@@ -18,8 +19,11 @@ export default function ConsultasParcelas({ pacienteId }) {
   const [verTodasConsultas, setVerTodasConsultas] = useState(false);
   const [verTodasParcelas, setVerTodasParcelas] = useState(false);
 
+  const [dentistaPadrao, setDentistaPadrao] = useState("");
+
   const [modalRealizar, setModalRealizar] = useState(null); // consulta | null
-  const [formRealizar, setFormRealizar] = useState({ data: "", observacao: "" });
+  const [formRealizar, setFormRealizar] = useState({ data: "", observacao: "", etapas: [] });
+  const [etapasJaFeitas, setEtapasJaFeitas] = useState(new Set());
   const [salvandoRealizar, setSalvandoRealizar] = useState(false);
 
   const [modalDetalhe, setModalDetalhe] = useState(null); // consulta | null
@@ -46,17 +50,39 @@ export default function ConsultasParcelas({ pacienteId }) {
 
   useEffect(() => {
     carregar();
+    supabase
+      .from("pacientes")
+      .select("dentista_id")
+      .eq("id", pacienteId)
+      .single()
+      .then(({ data }) => setDentistaPadrao(data?.dentista_id ?? ""));
   }, [pacienteId]);
 
-  function abrirMarcarRealizada(consulta) {
+  async function abrirMarcarRealizada(consulta) {
     setError(null);
-    setFormRealizar({ data: todayISO(), observacao: "" });
+    setFormRealizar({ data: todayISO(), observacao: "", etapas: [] });
     setModalRealizar(consulta);
+
+    const { data } = await supabase
+      .from("historico_etapas")
+      .select("etapa")
+      .eq("paciente_id", pacienteId);
+    setEtapasJaFeitas(new Set((data ?? []).map((e) => e.etapa)));
+  }
+
+  function toggleEtapaSelecionada(etapa) {
+    setFormRealizar((f) => ({
+      ...f,
+      etapas: f.etapas.includes(etapa)
+        ? f.etapas.filter((e) => e !== etapa)
+        : [...f.etapas, etapa],
+    }));
   }
 
   async function confirmarRealizada(e) {
     e.preventDefault();
     setSalvandoRealizar(true);
+
     const { error } = await supabase
       .from("consultas")
       .update({
@@ -65,11 +91,30 @@ export default function ConsultasParcelas({ pacienteId }) {
         observacao: formRealizar.observacao.trim(),
       })
       .eq("id", modalRealizar.id);
-    setSalvandoRealizar(false);
+
     if (error) {
+      setSalvandoRealizar(false);
       setError(error.message);
       return;
     }
+
+    if (formRealizar.etapas.length > 0) {
+      const registros = formRealizar.etapas.map((etapa) => ({
+        paciente_id: pacienteId,
+        etapa,
+        dentista_id: dentistaPadrao,
+        data: formRealizar.data,
+        consulta_id: modalRealizar.id,
+      }));
+      const { error: etapasError } = await supabase.from("historico_etapas").insert(registros);
+      if (etapasError) {
+        setSalvandoRealizar(false);
+        setError(etapasError.message);
+        return;
+      }
+    }
+
+    setSalvandoRealizar(false);
     setModalRealizar(null);
     carregar();
   }
@@ -271,6 +316,26 @@ export default function ConsultasParcelas({ pacienteId }) {
                 required
               />
             </label>
+
+            <div>
+              <span className="label-texto">Etapas concluídas nesta consulta (opcional)</span>
+              {ETAPAS.filter((et) => !etapasJaFeitas.has(et)).length > 0 ? (
+                <div className="etapas-checklist">
+                  {ETAPAS.filter((et) => !etapasJaFeitas.has(et)).map((et) => (
+                    <label key={et} className="checkbox-linha">
+                      <input
+                        type="checkbox"
+                        checked={formRealizar.etapas.includes(et)}
+                        onChange={() => toggleEtapaSelecionada(et)}
+                      />
+                      {et}
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p className="modal-aviso">Todas as etapas já foram registradas.</p>
+              )}
+            </div>
 
             <div className="form-actions">
               <button type="submit" disabled={salvandoRealizar}>
