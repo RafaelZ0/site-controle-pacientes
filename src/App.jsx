@@ -48,9 +48,45 @@ export default function App() {
     setMenuAberto(false);
   }
 
+  const navItens = (
+    <>
+      <nav className="sidebar-nav">
+        <button
+          type="button"
+          className={view.name === "busca" || view.name === "editar" ? "ativo" : ""}
+          onClick={irParaBusca}
+        >
+          <IconPacientes />
+          Pacientes
+        </button>
+        <button
+          type="button"
+          className={view.name === "novo" ? "ativo" : ""}
+          onClick={irParaNovo}
+        >
+          <IconNovo />
+          Novo paciente
+        </button>
+      </nav>
+
+      <div className="sidebar-footer">
+        <span className="sidebar-footer-email">{session.user.email}</span>
+        <button
+          type="button"
+          onClick={() => {
+            setMenuAberto(false);
+            signOut();
+          }}
+        >
+          Sair
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <div className="app-shell">
-      <aside className={`sidebar ${menuAberto ? "menu-aberto" : ""}`}>
+      <aside className="sidebar">
         <div className="sidebar-top">
           <div className="sidebar-brand wordmark">
             Instituto Odontológico Dr. Pablo Santos
@@ -65,32 +101,17 @@ export default function App() {
           </button>
         </div>
 
-        <nav className="sidebar-nav">
-          <button
-            type="button"
-            className={view.name === "busca" || view.name === "editar" ? "ativo" : ""}
-            onClick={irParaBusca}
-          >
-            <IconPacientes />
-            Pacientes
-          </button>
-          <button
-            type="button"
-            className={view.name === "novo" ? "ativo" : ""}
-            onClick={irParaNovo}
-          >
-            <IconNovo />
-            Novo paciente
-          </button>
-        </nav>
-
-        <div className="sidebar-footer">
-          <span className="sidebar-footer-email">{session.user.email}</span>
-          <button type="button" onClick={signOut}>
-            Sair
-          </button>
-        </div>
+        {/* Desktop: nav e rodapé ficam dentro da própria sidebar fixa */}
+        <div className="sidebar-conteudo-desktop">{navItens}</div>
       </aside>
+
+      {menuAberto && (
+        <div className="drawer-overlay" onClick={() => setMenuAberto(false)}>
+          <div className="drawer-panel" onClick={(e) => e.stopPropagation()}>
+            {navItens}
+          </div>
+        </div>
+      )}
 
       <main className="app-main">
         {view.name === "busca" && (

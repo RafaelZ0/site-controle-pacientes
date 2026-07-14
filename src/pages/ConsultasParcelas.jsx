@@ -7,10 +7,16 @@ const STATUS_LABEL = {
   REALIZADA: "realizada",
 };
 
+const LIMITE_PADRAO = 4;
+const PRIORIDADE_CONSULTA = { "EM ATRASO": 0, "EM DIA": 1, REALIZADA: 2 };
+
 export default function ConsultasParcelas({ pacienteId }) {
+  const [aba, setAba] = useState("consultas");
   const [consultas, setConsultas] = useState([]);
   const [parcelas, setParcelas] = useState([]);
   const [error, setError] = useState(null);
+  const [verTodasConsultas, setVerTodasConsultas] = useState(false);
+  const [verTodasParcelas, setVerTodasParcelas] = useState(false);
 
   async function carregar() {
     const [c, p] = await Promise.all([
@@ -61,13 +67,47 @@ export default function ConsultasParcelas({ pacienteId }) {
     else carregar();
   }
 
+  const hoje = todayISO();
+
+  const consultasOrdenadas = [...consultas].sort(
+    (a, b) =>
+      (PRIORIDADE_CONSULTA[a.status] ?? 1) - (PRIORIDADE_CONSULTA[b.status] ?? 1) ||
+      a.numero - b.numero
+  );
+  const consultasVisiveis = verTodasConsultas
+    ? consultasOrdenadas
+    : consultasOrdenadas.slice(0, LIMITE_PADRAO);
+
+  const parcelasOrdenadas = [...parcelas].sort(
+    (a, b) => prioridadeParcela(a, hoje) - prioridadeParcela(b, hoje) || a.numero - b.numero
+  );
+  const parcelasVisiveis = verTodasParcelas
+    ? parcelasOrdenadas
+    : parcelasOrdenadas.slice(0, LIMITE_PADRAO);
+
   return (
     <div className="consultas-parcelas">
+      <div className="tabs">
+        <button
+          type="button"
+          className={aba === "consultas" ? "ativo" : ""}
+          onClick={() => setAba("consultas")}
+        >
+          Consultas
+        </button>
+        <button
+          type="button"
+          className={aba === "parcelas" ? "ativo" : ""}
+          onClick={() => setAba("parcelas")}
+        >
+          Parcelas
+        </button>
+      </div>
+
       {error && <p className="error">{error}</p>}
 
-      <div className="cp-columns">
-        <div>
-          <h3>Consultas</h3>
+      {aba === "consultas" && (
+        <>
           <table className="cp-table">
             <thead>
               <tr>
@@ -78,7 +118,7 @@ export default function ConsultasParcelas({ pacienteId }) {
               </tr>
             </thead>
             <tbody>
-              {consultas.map((c) => (
+              {consultasVisiveis.map((c) => (
                 <tr key={c.id}>
                   <td>{c.numero}</td>
                   <td>{formatDate(c.data_prevista)}</td>
@@ -88,20 +128,32 @@ export default function ConsultasParcelas({ pacienteId }) {
                     </span>
                   </td>
                   <td>
-                    <input
-                      type="checkbox"
-                      checked={c.realizada}
-                      onChange={() => toggleConsulta(c)}
-                    />
+                    <label className="check-touch">
+                      <input
+                        type="checkbox"
+                        checked={c.realizada}
+                        onChange={() => toggleConsulta(c)}
+                      />
+                    </label>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
+          {consultas.length > LIMITE_PADRAO && (
+            <button
+              type="button"
+              className="btn-outline ver-todas"
+              onClick={() => setVerTodasConsultas((v) => !v)}
+            >
+              {verTodasConsultas ? "Mostrar menos" : `Ver todas as ${consultas.length}`}
+            </button>
+          )}
+        </>
+      )}
 
-        <div>
-          <h3>Parcelas</h3>
+      {aba === "parcelas" && (
+        <>
           <table className="cp-table">
             <thead>
               <tr>
@@ -111,25 +163,42 @@ export default function ConsultasParcelas({ pacienteId }) {
               </tr>
             </thead>
             <tbody>
-              {parcelas.map((p) => (
+              {parcelasVisiveis.map((p) => (
                 <tr key={p.id}>
                   <td>{p.numero}</td>
                   <td>{formatDate(p.data_vencimento)}</td>
                   <td>
-                    <input
-                      type="checkbox"
-                      checked={p.paga}
-                      onChange={() => toggleParcela(p)}
-                    />
+                    <label className="check-touch">
+                      <input
+                        type="checkbox"
+                        checked={p.paga}
+                        onChange={() => toggleParcela(p)}
+                      />
+                    </label>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </div>
-      </div>
+          {parcelas.length > LIMITE_PADRAO && (
+            <button
+              type="button"
+              className="btn-outline ver-todas"
+              onClick={() => setVerTodasParcelas((v) => !v)}
+            >
+              {verTodasParcelas ? "Mostrar menos" : `Ver todas as ${parcelas.length}`}
+            </button>
+          )}
+        </>
+      )}
     </div>
   );
+}
+
+function prioridadeParcela(parcela, hojeISO) {
+  if (parcela.paga) return 2;
+  if (parcela.data_vencimento < hojeISO) return 0;
+  return 1;
 }
 
 function todayISO() {

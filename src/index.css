@@ -138,6 +138,36 @@ h3 {
   color: var(--text-inverse);
 }
 
+.sidebar-conteudo-desktop {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Drawer mobile: sobrepõe o conteúdo em vez de empurrar */
+.drawer-overlay {
+  display: none;
+}
+
+.drawer-panel {
+  background: var(--navy-900);
+  width: min(280px, 80vw);
+  height: 100%;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+}
+
+@keyframes drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
 .sidebar-nav {
   display: flex;
   flex-direction: column;
@@ -474,22 +504,8 @@ button:disabled {
   max-width: 720px;
 }
 
-.cp-columns {
-  display: flex;
-  gap: 2rem;
-  flex-wrap: wrap;
-}
-
-.cp-columns > div {
-  flex: 1;
-  min-width: 280px;
-}
-
-.cp-columns h3 {
-  color: var(--text-secondary);
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+.ver-todas {
+  margin-top: 0.75rem;
 }
 
 .cp-table {
@@ -530,6 +546,21 @@ button:disabled {
   background: var(--canvas);
 }
 
+.check-touch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+}
+
+.check-touch input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
 /* Aviso de recálculo (edição de campos críticos) */
 .aviso-recalculo {
   background: #eef4ff;
@@ -541,71 +572,65 @@ button:disabled {
   line-height: 1.5;
 }
 
-/* Histórico de etapas */
+/* Histórico de etapas: chips compactos + modal */
 .historico-etapas {
   margin-top: 1.75rem;
-  max-width: 640px;
+  max-width: 720px;
 }
 
-.etapas-lista {
+.etapas-chips {
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   margin-top: 0.75rem;
 }
 
-.etapa-item {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--raio);
-  padding: 0.25rem;
-}
-
-.etapa-item-header {
-  display: flex;
+.etapa-chip {
+  display: inline-flex;
   align-items: center;
-  gap: 0.65rem;
-  width: 100%;
+  gap: 0.5rem;
   height: auto;
-  padding: 0.55rem 0.6rem;
-  border: none;
-  background: transparent;
-  text-align: left;
-  font-size: 0.9rem;
-  color: var(--text-primary);
-}
-
-.etapa-item-header:hover:not(:disabled) {
-  background: var(--canvas);
-  border-color: transparent;
-  color: var(--text-primary);
-}
-
-.etapa-marcador {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  min-height: 40px;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--border);
   border-radius: 999px;
-  border: 1.5px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.etapa-chip.concluida {
+  background: var(--status-ok-bg);
+  border-color: var(--status-ok-bg);
   color: var(--status-ok-text);
 }
 
-.etapa-marcador.concluida {
-  background: var(--status-ok-bg);
-  border-color: var(--status-ok-bg);
+.etapa-chip.atual {
+  box-shadow: 0 0 0 2px var(--blue-600);
 }
 
-.etapa-nome {
-  flex: 1;
-  font-weight: 500;
+.etapa-chip-texto {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
 }
 
-.badge-atual {
-  background: rgba(37, 99, 235, 0.1);
-  color: var(--blue-600);
+.etapa-chip-nome {
+  font-weight: 600;
+}
+
+.etapa-chip-info {
+  font-size: 0.72rem;
+  opacity: 0.85;
+}
+
+.etapa-modal-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-height: 260px;
+  overflow-y: auto;
 }
 
 .etapa-registro {
@@ -613,9 +638,13 @@ button:disabled {
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.5rem 0.75rem 0.5rem 2.85rem;
-  border-top: 1px solid var(--border);
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
   font-size: 0.85rem;
+}
+
+.etapa-registro:last-child {
+  border-bottom: none;
 }
 
 .etapa-registro-info {
@@ -634,7 +663,7 @@ button:disabled {
 }
 
 .etapa-registro-acoes button {
-  height: 28px;
+  height: 32px;
   padding: 0 0.6rem;
   font-size: 0.78rem;
 }
@@ -643,12 +672,6 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-  padding: 0.85rem 0.85rem 0.85rem 2.85rem;
-  border-top: 1px solid var(--border);
-}
-
-.etapa-form .form-actions {
-  margin-top: 0;
 }
 
 /* Zona de perigo (excluir paciente) */
@@ -777,11 +800,18 @@ button:disabled {
     height: auto;
     flex-direction: column;
     padding: 0.85rem 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 50;
   }
 
   .sidebar-brand {
     font-size: 1.05rem;
     margin-bottom: 0;
+  }
+
+  .sidebar-conteudo-desktop {
+    display: none;
   }
 
   .menu-toggle {
@@ -790,28 +820,20 @@ button:disabled {
     justify-content: center;
   }
 
-  .sidebar-nav,
-  .sidebar-footer {
-    display: none;
+  .drawer-overlay {
+    display: flex;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 90;
   }
 
-  .sidebar.menu-aberto .sidebar-nav {
-    display: flex;
-    margin-top: 1rem;
-  }
-
-  .sidebar.menu-aberto .sidebar-footer {
-    display: flex;
-    margin-top: 1rem;
-    padding-top: 0.85rem;
+  .drawer-panel {
+    animation: drawer-in 0.18s ease-out;
   }
 
   .app-main {
     padding: 1.25rem 1rem;
-  }
-
-  .cp-columns {
-    gap: 1.25rem;
   }
 }
 
@@ -859,11 +881,6 @@ button:disabled {
     min-width: 0;
   }
 
-  .etapa-registro,
-  .etapa-form {
-    padding-left: 1.1rem;
-  }
-
   .modal-card {
     padding: 1.5rem;
   }
@@ -879,5 +896,12 @@ button:disabled {
 
   .tabs {
     gap: 1rem;
+  }
+
+  /* Área de toque confortável em telas pequenas */
+  .etapa-registro-acoes button,
+  .pacientes-table td button {
+    height: 40px;
+    padding: 0 0.85rem;
   }
 }
