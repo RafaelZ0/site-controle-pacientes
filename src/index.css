@@ -745,28 +745,14 @@ button:disabled {
   margin-bottom: 1.25rem;
 }
 
-.dentistas-form {
-  display: flex;
-  align-items: flex-end;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  max-width: 480px;
-  padding: 1.5rem;
+.dentistas-adicionar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
-.dentistas-form label {
-  flex: 1;
-}
-
-.dentistas-acoes {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.dentistas-acoes button {
-  height: 32px;
-  padding: 0 0.75rem;
-  font-size: 0.85rem;
+.dentistas-tabela-wrap {
+  margin-top: 1.25rem;
 }
 
 .dentistas-nota {
