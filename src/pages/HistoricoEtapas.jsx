@@ -3,12 +3,13 @@ import { Check, Calendar } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { ETAPAS } from "../lib/constants";
 
-const formInicial = { dentista_id: "", data: "", observacao: "" };
+const formInicial = { dentista_id: "", data: "", observacao: "", consulta_id: "" };
 
 export default function HistoricoEtapas({ pacienteId }) {
   const [historico, setHistorico] = useState([]);
   const [dentistas, setDentistas] = useState([]);
   const [dentistaPadrao, setDentistaPadrao] = useState("");
+  const [consultas, setConsultas] = useState([]);
   const [error, setError] = useState(null);
 
   const [modalEtapa, setModalEtapa] = useState(null); // string | null
@@ -42,6 +43,13 @@ export default function HistoricoEtapas({ pacienteId }) {
       .single()
       .then(({ data }) => setDentistaPadrao(data?.dentista_id ?? ""));
 
+    supabase
+      .from("consultas")
+      .select("id, numero, data_prevista")
+      .eq("paciente_id", pacienteId)
+      .order("numero")
+      .then(({ data }) => setConsultas(data ?? []));
+
     carregar();
   }, [pacienteId]);
 
@@ -64,7 +72,12 @@ export default function HistoricoEtapas({ pacienteId }) {
   }
 
   function iniciarNovoRegistro() {
-    setForm({ dentista_id: dentistaPadrao ?? "", data: todayISO(), observacao: "" });
+    setForm({
+      dentista_id: dentistaPadrao ?? "",
+      data: todayISO(),
+      observacao: "",
+      consulta_id: "",
+    });
     setEdicaoId(null);
     setMostrarForm(true);
   }
@@ -74,6 +87,7 @@ export default function HistoricoEtapas({ pacienteId }) {
       dentista_id: entry.dentista_id,
       data: entry.data,
       observacao: entry.observacao ?? "",
+      consulta_id: entry.consulta_id ?? "",
     });
     setEdicaoId(entry.id);
     setMostrarForm(true);
@@ -90,6 +104,7 @@ export default function HistoricoEtapas({ pacienteId }) {
       dentista_id: form.dentista_id,
       data: form.data,
       observacao: form.observacao.trim() || null,
+      consulta_id: form.consulta_id || null,
     };
 
     const result = edicaoId
@@ -179,6 +194,11 @@ export default function HistoricoEtapas({ pacienteId }) {
                         <div>
                           <span className="etapa-registro-info">
                             {entry.dentistas?.nome ?? "—"} · {formatDate(entry.data)}
+                            {entry.consulta_id &&
+                              (() => {
+                                const c = consultas.find((c) => c.id === entry.consulta_id);
+                                return c ? ` · consulta #${c.numero}` : "";
+                              })()}
                           </span>
                           {entry.observacao && (
                             <p className="etapa-registro-obs">{entry.observacao}</p>
@@ -250,6 +270,21 @@ export default function HistoricoEtapas({ pacienteId }) {
                     value={form.observacao}
                     onChange={(e) => setForm((f) => ({ ...f, observacao: e.target.value }))}
                   />
+                </label>
+
+                <label>
+                  Consulta relacionada (opcional)
+                  <select
+                    value={form.consulta_id}
+                    onChange={(e) => setForm((f) => ({ ...f, consulta_id: e.target.value }))}
+                  >
+                    <option value="">Nenhuma</option>
+                    {consultas.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        #{c.numero} — {formatDate(c.data_prevista)}
+                      </option>
+                    ))}
+                  </select>
                 </label>
 
                 <div className="form-actions">

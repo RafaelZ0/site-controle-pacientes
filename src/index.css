@@ -710,6 +710,10 @@ button:disabled {
   background: var(--canvas);
 }
 
+.cp-row-clicavel {
+  cursor: pointer;
+}
+
 .check-touch {
   display: inline-flex;
   align-items: center;

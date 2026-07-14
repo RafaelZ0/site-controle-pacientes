@@ -18,6 +18,13 @@ export default function ConsultasParcelas({ pacienteId }) {
   const [verTodasConsultas, setVerTodasConsultas] = useState(false);
   const [verTodasParcelas, setVerTodasParcelas] = useState(false);
 
+  const [modalRealizar, setModalRealizar] = useState(null); // consulta | null
+  const [formRealizar, setFormRealizar] = useState({ data: "", observacao: "" });
+  const [salvandoRealizar, setSalvandoRealizar] = useState(false);
+
+  const [modalDetalhe, setModalDetalhe] = useState(null); // consulta | null
+  const [etapasDaConsulta, setEtapasDaConsulta] = useState([]);
+
   async function carregar() {
     const [c, p] = await Promise.all([
       supabase
@@ -41,17 +48,56 @@ export default function ConsultasParcelas({ pacienteId }) {
     carregar();
   }, [pacienteId]);
 
-  async function toggleConsulta(consulta) {
-    const realizada = !consulta.realizada;
+  function abrirMarcarRealizada(consulta) {
+    setError(null);
+    setFormRealizar({ data: todayISO(), observacao: "" });
+    setModalRealizar(consulta);
+  }
+
+  async function confirmarRealizada(e) {
+    e.preventDefault();
+    setSalvandoRealizar(true);
     const { error } = await supabase
       .from("consultas")
       .update({
-        realizada,
-        data_realizada: realizada ? todayISO() : null,
+        realizada: true,
+        data_realizada: formRealizar.data,
+        observacao: formRealizar.observacao.trim(),
       })
+      .eq("id", modalRealizar.id);
+    setSalvandoRealizar(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setModalRealizar(null);
+    carregar();
+  }
+
+  async function desmarcarRealizada(consulta) {
+    setError(null);
+    const { error } = await supabase
+      .from("consultas")
+      .update({ realizada: false, data_realizada: null, observacao: null })
       .eq("id", consulta.id);
     if (error) setError(error.message);
     else carregar();
+  }
+
+  async function abrirDetalhe(consulta) {
+    setModalDetalhe(consulta);
+    const { data, error } = await supabase
+      .from("historico_etapas")
+      .select("*, dentistas(nome)")
+      .eq("consulta_id", consulta.id)
+      .order("created_at");
+    if (error) setError(error.message);
+    else setEtapasDaConsulta(data ?? []);
+  }
+
+  function fecharDetalhe() {
+    setModalDetalhe(null);
+    setEtapasDaConsulta([]);
   }
 
   async function toggleParcela(parcela) {
@@ -119,7 +165,7 @@ export default function ConsultasParcelas({ pacienteId }) {
             </thead>
             <tbody>
               {consultasVisiveis.map((c) => (
-                <tr key={c.id}>
+                <tr key={c.id} className="cp-row-clicavel" onClick={() => abrirDetalhe(c)}>
                   <td>{c.numero}</td>
                   <td>{formatDate(c.data_prevista)}</td>
                   <td>
@@ -127,12 +173,14 @@ export default function ConsultasParcelas({ pacienteId }) {
                       {STATUS_LABEL[c.status] ?? c.status}
                     </span>
                   </td>
-                  <td>
+                  <td onClick={(e) => e.stopPropagation()}>
                     <label className="check-touch">
                       <input
                         type="checkbox"
                         checked={c.realizada}
-                        onChange={() => toggleConsulta(c)}
+                        onChange={() =>
+                          c.realizada ? desmarcarRealizada(c) : abrirMarcarRealizada(c)
+                        }
                       />
                     </label>
                   </td>
@@ -190,6 +238,109 @@ export default function ConsultasParcelas({ pacienteId }) {
             </button>
           )}
         </>
+      )}
+
+      {modalRealizar && (
+        <div className="modal-overlay" onClick={() => setModalRealizar(null)}>
+          <form
+            className="modal-card"
+            onClick={(e) => e.stopPropagation()}
+            onSubmit={confirmarRealizada}
+          >
+            <h2>Marcar consulta #{modalRealizar.numero} como realizada</h2>
+
+            <label>
+              Data real da consulta
+              <input
+                type="date"
+                value={formRealizar.data}
+                onChange={(e) => setFormRealizar((f) => ({ ...f, data: e.target.value }))}
+                required
+              />
+            </label>
+
+            <label>
+              O que foi feito nessa consulta
+              <input
+                type="text"
+                value={formRealizar.observacao}
+                onChange={(e) =>
+                  setFormRealizar((f) => ({ ...f, observacao: e.target.value }))
+                }
+                placeholder="Ex: moldagem, prova da prótese..."
+                required
+              />
+            </label>
+
+            <div className="form-actions">
+              <button type="submit" disabled={salvandoRealizar}>
+                {salvandoRealizar ? "Salvando..." : "Confirmar"}
+              </button>
+              <button
+                type="button"
+                className="btn-outline"
+                onClick={() => setModalRealizar(null)}
+                disabled={salvandoRealizar}
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {modalDetalhe && (
+        <div className="modal-overlay" onClick={fecharDetalhe}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <h2>Consulta #{modalDetalhe.numero}</h2>
+
+            <p className="modal-aviso">
+              Data prevista: <strong>{formatDate(modalDetalhe.data_prevista)}</strong>
+            </p>
+
+            {modalDetalhe.realizada ? (
+              <>
+                <p className="modal-aviso">
+                  Realizada em: <strong>{formatDate(modalDetalhe.data_realizada)}</strong>
+                </p>
+                <p className="modal-aviso">
+                  Observação: <strong>{modalDetalhe.observacao || "—"}</strong>
+                </p>
+              </>
+            ) : (
+              <p className="modal-aviso">Ainda não foi realizada.</p>
+            )}
+
+            <div>
+              <h3>Etapas concluídas nesta consulta</h3>
+              {etapasDaConsulta.length > 0 ? (
+                <div className="etapa-modal-lista">
+                  {etapasDaConsulta.map((entry) => (
+                    <div className="etapa-registro" key={entry.id}>
+                      <div>
+                        <span className="etapa-registro-info">
+                          {entry.etapa} — {entry.dentistas?.nome ?? "—"} ·{" "}
+                          {formatDate(entry.data)}
+                        </span>
+                        {entry.observacao && (
+                          <p className="etapa-registro-obs">{entry.observacao}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="modal-aviso">Nenhuma etapa vinculada a esta consulta.</p>
+              )}
+            </div>
+
+            <div className="form-actions">
+              <button type="button" className="btn-outline" onClick={fecharDetalhe}>
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
