@@ -5,7 +5,7 @@ import HistoricoEtapas from "./HistoricoEtapas";
 import ConsultasParcelas from "./ConsultasParcelas";
 
 export default function PacienteEditar({ pacienteId, onSaved, onCancel }) {
-  const [aba, setAba] = useState("cadastro");
+  const [aba, setAba] = useState("status");
   const [nome, setNome] = useState("");
 
   useEffect(() => {
@@ -24,17 +24,17 @@ export default function PacienteEditar({ pacienteId, onSaved, onCancel }) {
       <div className="tabs">
         <button
           type="button"
-          className={aba === "cadastro" ? "ativo" : ""}
-          onClick={() => setAba("cadastro")}
-        >
-          Dados cadastrais
-        </button>
-        <button
-          type="button"
           className={aba === "status" ? "ativo" : ""}
           onClick={() => setAba("status")}
         >
           Status do tratamento
+        </button>
+        <button
+          type="button"
+          className={aba === "cadastro" ? "ativo" : ""}
+          onClick={() => setAba("cadastro")}
+        >
+          Dados cadastrais
         </button>
       </div>
 
