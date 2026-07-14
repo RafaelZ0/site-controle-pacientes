@@ -34,9 +34,12 @@ export default function Busca({ onEditPaciente }) {
     if (dentistaId) query = query.eq("dentista_id", dentistaId);
     if (etapa) query = query.eq("etapa_atual", etapa);
     if (busca.trim()) {
-      const termo = busca.trim().replace(/[%,]/g, "");
+      // Escapa aspas e tira % pra não interferir no curinga do ilike; o
+      // valor vai entre aspas duplas pra o Supabase não quebrar a leitura
+      // do filtro quando o texto tiver vírgula, parênteses ou dois-pontos.
+      const termo = busca.trim().replace(/%/g, "").replace(/"/g, '""');
       query = query.or(
-        `nome_completo.ilike.%${termo}%,telefone.ilike.%${termo}%,cpf.ilike.%${termo}%`
+        `nome_completo.ilike."%${termo}%",telefone.ilike."%${termo}%",cpf.ilike."%${termo}%"`
       );
     }
 

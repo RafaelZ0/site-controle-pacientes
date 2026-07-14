@@ -149,12 +149,19 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
       // Toda ficha nova começa em AVALIAÇÃO, na data de início do tratamento
       // (não na data de hoje, pra não distorcer o histórico de quem cadastra
       // um paciente que já começou antes).
-      await supabase.from("historico_etapas").insert({
+      const { error: etapaError } = await supabase.from("historico_etapas").insert({
         paciente_id: data.id,
         etapa: "AVALIAÇÃO",
         dentista_id: payload.dentista_id,
         data: payload.data_inicio,
       });
+      if (etapaError) {
+        setLoading(false);
+        setError(
+          `Paciente criado, mas não foi possível registrar a etapa inicial (AVALIAÇÃO): ${etapaError.message}. Abra o paciente na busca e registre a etapa manualmente.`
+        );
+        return;
+      }
     }
 
     setLoading(false);
@@ -163,6 +170,11 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
   }
 
   async function handleRegenerarPlano() {
+    const confirmado = window.confirm(
+      "Isso vai apagar TODAS as consultas e parcelas deste paciente e recriar do zero — inclusive as já marcadas como realizadas/pagas, que serão perdidas. Essa ação não pode ser desfeita. Continuar?"
+    );
+    if (!confirmado) return;
+
     setError(null);
     setInfo(null);
     setRegenerando(true);

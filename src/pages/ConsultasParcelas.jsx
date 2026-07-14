@@ -108,8 +108,15 @@ export default function ConsultasParcelas({ pacienteId }) {
       }));
       const { error: etapasError } = await supabase.from("historico_etapas").insert(registros);
       if (etapasError) {
+        // A consulta já foi salva como realizada acima; só as etapas
+        // falharam. Atualiza a lista pra tela não ficar desincronizada
+        // do banco, e deixa claro que só uma parte não foi salva.
         setSalvandoRealizar(false);
-        setError(etapasError.message);
+        setError(
+          `Consulta marcada como realizada, mas as etapas selecionadas não foram salvas: ${etapasError.message}`
+        );
+        setModalRealizar(null);
+        carregar();
         return;
       }
     }

@@ -7,7 +7,10 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(undefined); // undefined = carregando
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    supabase.auth
+      .getSession()
+      .then(({ data }) => setSession(data.session))
+      .catch(() => setSession(null)); // falha de rede não deve travar em "Carregando..." pra sempre
 
     const { data: subscription } = supabase.auth.onAuthStateChange(
       (_event, newSession) => setSession(newSession)
