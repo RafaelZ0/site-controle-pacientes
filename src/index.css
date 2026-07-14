@@ -740,6 +740,43 @@ button:disabled {
   cursor: pointer;
 }
 
+/* Dentistas */
+.dentistas-page h2 {
+  margin-bottom: 1.25rem;
+}
+
+.dentistas-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  max-width: 480px;
+  padding: 1.5rem;
+}
+
+.dentistas-form label {
+  flex: 1;
+}
+
+.dentistas-acoes {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.dentistas-acoes button {
+  height: 32px;
+  padding: 0 0.75rem;
+  font-size: 0.85rem;
+}
+
+.dentistas-nota {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  max-width: 640px;
+  line-height: 1.5;
+}
+
 .check-touch {
   display: inline-flex;
   align-items: center;

@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { Users, UserPlus, Menu } from "lucide-react";
+import { Users, UserPlus, Stethoscope, Menu } from "lucide-react";
 import { useAuth } from "./lib/AuthContext";
 import Login from "./pages/Login";
 import Busca from "./pages/Busca";
 import PacienteForm from "./pages/PacienteForm";
 import PacienteEditar from "./pages/PacienteEditar";
+import Dentistas from "./pages/Dentistas";
 
 export default function App() {
   const { session, loading, signOut } = useAuth();
@@ -21,6 +22,11 @@ export default function App() {
 
   function irParaNovo() {
     setView({ name: "novo" });
+    setMenuAberto(false);
+  }
+
+  function irParaDentistas() {
+    setView({ name: "dentistas" });
     setMenuAberto(false);
   }
 
@@ -42,6 +48,14 @@ export default function App() {
         >
           <UserPlus size={18} strokeWidth={1.75} />
           Novo paciente
+        </button>
+        <button
+          type="button"
+          className={view.name === "dentistas" ? "ativo" : ""}
+          onClick={irParaDentistas}
+        >
+          <Stethoscope size={18} strokeWidth={1.75} />
+          Dentistas
         </button>
       </nav>
 
@@ -106,6 +120,7 @@ export default function App() {
             onCancel={irParaBusca}
           />
         )}
+        {view.name === "dentistas" && <Dentistas />}
       </main>
     </div>
   );
