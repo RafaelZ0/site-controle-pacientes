@@ -94,6 +94,9 @@ h3 {
   height: 96px;
   object-fit: contain;
   position: relative;
+  /* A logo é navy+teal; sobre o fundo navy do painel o navy "some".
+     Isso força o ícone inteiro pra branco, mantendo só a silhueta. */
+  filter: brightness(0) invert(1);
 }
 
 .login-brand-nome {
@@ -167,9 +170,11 @@ h3 {
 }
 
 .sidebar-logo {
-  width: 40px;
-  height: 40px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
+  /* Mesma correção do login: navy sobre navy some, então vira branco. */
+  filter: brightness(0) invert(1);
 }
 
 .sidebar-brand .wordmark {
