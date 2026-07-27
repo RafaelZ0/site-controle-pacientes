@@ -1379,6 +1379,21 @@ button:disabled {
   .app-main {
     padding: 1.25rem 1rem;
   }
+
+  /* Tabelas de dados (Pacientes/Dentistas/Ajustes) não cabem na largura da
+     tela — em vez de estourar o layout inteiro, só a tabela rola de lado. */
+  .pacientes-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .pacientes-table {
+    min-width: 720px;
+  }
+
+  .cp-table {
+    min-width: 0;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1442,19 +1457,6 @@ button:disabled {
     min-width: 0;
   }
 
-  .pacientes-table-wrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .pacientes-table {
-    min-width: 720px;
-  }
-
-  .cp-table {
-    min-width: 0;
-  }
-
   .modal-card {
     padding: 1.5rem;
   }
@@ -1477,5 +1479,31 @@ button:disabled {
   .pacientes-table td button {
     height: 40px;
     padding: 0 0.85rem;
+  }
+
+  /* Grids de 2 colunas viram 1 coluna — em telas estreitas o texto dos
+     rótulos/checkboxes fica espremido demais lado a lado. */
+  .exportar-filtros,
+  .exportar-colunas {
+    grid-template-columns: 1fr;
+  }
+
+  /* Linha de etapa (nome do dentista/data + botões Editar/Excluir) empilha
+     em vez de espremer os botões contra o texto. */
+  .etapa-registro {
+    flex-wrap: wrap;
+  }
+
+  .etapa-registro-acoes {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .ajuste-action-status {
+    flex-wrap: wrap;
+  }
+
+  .paciente-editar-header {
+    flex-wrap: wrap;
   }
 }
