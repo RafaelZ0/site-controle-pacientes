@@ -816,6 +816,12 @@ button:disabled {
   margin-top: 1.25rem;
 }
 
+.ajustes-descricao {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
 .dentistas-nota {
   margin-top: 1rem;
   font-size: 0.8rem;
@@ -858,6 +864,36 @@ button:disabled {
   font-size: 0.85rem;
   line-height: 1.5;
   margin-bottom: 1.5rem;
+}
+
+.ajuste-action button.btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ajuste-action-status {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.link-botao {
+  height: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--navy);
+  text-decoration: underline;
+  font-size: inherit;
+}
+
+.link-botao:hover:not(:disabled) {
+  border: none;
+  color: var(--navy);
+  opacity: 0.8;
 }
 
 /* Histórico de etapas: progresso + chips compactos + modal */

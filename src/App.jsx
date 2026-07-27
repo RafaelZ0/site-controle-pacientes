@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Users, UserPlus, Stethoscope, Menu } from "lucide-react";
+import { Users, UserPlus, Stethoscope, Wrench, Menu } from "lucide-react";
 import { useAuth } from "./lib/AuthContext";
 import Login from "./pages/Login";
 import Busca from "./pages/Busca";
 import PacienteForm from "./pages/PacienteForm";
 import PacienteEditar from "./pages/PacienteEditar";
 import Dentistas from "./pages/Dentistas";
+import Ajustes from "./pages/Ajustes";
 
 export default function App() {
   const { session, loading, signOut } = useAuth();
@@ -27,6 +28,11 @@ export default function App() {
 
   function irParaDentistas() {
     setView({ name: "dentistas" });
+    setMenuAberto(false);
+  }
+
+  function irParaAjustes() {
+    setView({ name: "ajustes" });
     setMenuAberto(false);
   }
 
@@ -56,6 +62,14 @@ export default function App() {
         >
           <Stethoscope size={18} strokeWidth={1.75} />
           Dentistas
+        </button>
+        <button
+          type="button"
+          className={view.name === "ajustes" ? "ativo" : ""}
+          onClick={irParaAjustes}
+        >
+          <Wrench size={18} strokeWidth={1.75} />
+          Ajustes
         </button>
       </nav>
 
@@ -121,6 +135,9 @@ export default function App() {
           />
         )}
         {view.name === "dentistas" && <Dentistas />}
+        {view.name === "ajustes" && (
+          <Ajustes onEditPaciente={(id) => setView({ name: "editar", id })} />
+        )}
       </main>
     </div>
   );

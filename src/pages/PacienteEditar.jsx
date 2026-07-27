@@ -4,6 +4,7 @@ import { iniciais } from "../lib/avatar";
 import PacienteForm from "./PacienteForm";
 import HistoricoEtapas from "./HistoricoEtapas";
 import ConsultasParcelas from "./ConsultasParcelas";
+import EnviarAjusteAction from "./EnviarAjusteAction";
 
 export default function PacienteEditar({ pacienteId, onSaved, onCancel }) {
   const [aba, setAba] = useState("status");
@@ -60,6 +61,7 @@ export default function PacienteEditar({ pacienteId, onSaved, onCancel }) {
 
       {aba === "status" && (
         <div className="paciente-status">
+          <EnviarAjusteAction pacienteId={pacienteId} />
           <HistoricoEtapas pacienteId={pacienteId} />
           <ConsultasParcelas pacienteId={pacienteId} />
         </div>
