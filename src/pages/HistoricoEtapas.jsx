@@ -132,6 +132,11 @@ export default function HistoricoEtapas({ pacienteId }) {
   }
 
   async function excluir(entryId) {
+    const confirmado = window.confirm(
+      "Excluir este registro de etapa? Essa ação não pode ser desfeita."
+    );
+    if (!confirmado) return;
+
     setError(null);
     const { error } = await supabase.from("historico_etapas").delete().eq("id", entryId);
     if (error) setError(error.message);
@@ -228,7 +233,11 @@ export default function HistoricoEtapas({ pacienteId }) {
                           <button type="button" className="btn-outline" onClick={() => iniciarEdicao(entry)}>
                             Editar
                           </button>
-                          <button type="button" className="btn-outline" onClick={() => excluir(entry.id)}>
+                          <button
+                            type="button"
+                            className="btn-danger-outline"
+                            onClick={() => excluir(entry.id)}
+                          >
                             Excluir
                           </button>
                         </div>
@@ -252,23 +261,30 @@ export default function HistoricoEtapas({ pacienteId }) {
 
             {mostrarForm && (
               <form className="etapa-form" onSubmit={salvar}>
-                <label>
-                  Dentista
-                  <select
-                    value={form.dentista_id}
-                    onChange={(e) => setForm((f) => ({ ...f, dentista_id: e.target.value }))}
-                    required
-                  >
-                    <option value="" disabled>
-                      Selecione...
-                    </option>
-                    {dentistas.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.nome}
+                {dentistas.length === 0 ? (
+                  <p className="error">
+                    Nenhum dentista cadastrado neste workspace — cadastre um na
+                    aba Dentistas antes de registrar esta etapa.
+                  </p>
+                ) : (
+                  <label>
+                    Dentista
+                    <select
+                      value={form.dentista_id}
+                      onChange={(e) => setForm((f) => ({ ...f, dentista_id: e.target.value }))}
+                      required
+                    >
+                      <option value="" disabled>
+                        Selecione...
                       </option>
-                    ))}
-                  </select>
-                </label>
+                      {dentistas.map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.nome}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
 
                 <label>
                   <span className="label-texto">
@@ -308,7 +324,7 @@ export default function HistoricoEtapas({ pacienteId }) {
                 </label>
 
                 <div className="form-actions">
-                  <button type="submit" disabled={salvando}>
+                  <button type="submit" disabled={salvando || dentistas.length === 0}>
                     {salvando ? "Salvando..." : "Salvar"}
                   </button>
                   <button type="button" className="btn-outline" onClick={() => setMostrarForm(false)}>

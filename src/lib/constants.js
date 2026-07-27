@@ -10,3 +10,22 @@ export const ETAPAS = [
   "AJUSTES",
   "FINALIZADO",
 ];
+
+// Agrupa as 10 etapas em 4 cores pra dar de bater o olho numa lista e saber
+// em que fase geral o paciente está, sem precisar ler o texto de cada badge.
+const ETAPA_GRUPO = {
+  "AVALIAÇÃO": "badge-etapa-inicial",
+  "EM TRATAMENTO": "badge-etapa-andamento",
+  IMPLANTE: "badge-etapa-andamento",
+  PROVISÓRIO: "badge-etapa-andamento",
+  MOLDAGEM: "badge-etapa-andamento",
+  PROVA: "badge-etapa-andamento",
+  ENTREGA: "badge-etapa-andamento",
+  REABERTURA: "badge-etapa-atencao",
+  AJUSTES: "badge-etapa-atencao",
+  FINALIZADO: "badge-etapa-concluido",
+};
+
+export function etapaBadgeClasse(etapa) {
+  return ETAPA_GRUPO[etapa] ?? "badge-neutro";
+}

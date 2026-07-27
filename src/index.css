@@ -16,6 +16,10 @@
   --status-ok-text: #166534;
   --status-alerta-bg: #fbeaea;
   --status-alerta-text: #b91c1c;
+  --status-info-bg: #e5edfb;
+  --status-info-text: #1d4ed8;
+  --status-andamento-bg: #e3f0f0;
+  --status-andamento-text: #0f5457;
 
   --raio: 8px;
   --sombra-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.06);
@@ -806,6 +810,30 @@ button:disabled {
   color: var(--status-alerta-text);
 }
 
+/* Agrupamento de cor por etapa do tratamento — ver etapaBadgeClasse em
+   lib/constants.js. Inicial (azul) → andamento (teal) → atenção/retrabalho
+   (vermelho) → concluído (verde), pra dar de identificar a fase geral de
+   longe numa lista grande de pacientes. */
+.badge-etapa-inicial {
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
+}
+
+.badge-etapa-andamento {
+  background: var(--status-andamento-bg);
+  color: var(--status-andamento-text);
+}
+
+.badge-etapa-atencao {
+  background: var(--status-alerta-bg);
+  color: var(--status-alerta-text);
+}
+
+.badge-etapa-concluido {
+  background: var(--status-ok-bg);
+  color: var(--status-ok-text);
+}
+
 .badge-consulta-em-atraso {
   background: var(--status-alerta-bg);
   color: var(--status-alerta-text);
@@ -873,6 +901,19 @@ button:disabled {
 
 .cp-row-clicavel {
   cursor: pointer;
+}
+
+.cp-row-paga {
+  background: var(--status-ok-bg);
+}
+
+.cp-row-atrasada {
+  background: var(--status-alerta-bg);
+}
+
+.cp-row-paga:hover,
+.cp-row-atrasada:hover {
+  filter: brightness(0.97);
 }
 
 .etapas-checklist {
@@ -978,6 +1019,15 @@ button:disabled {
   gap: 0.4rem;
   font-size: 0.85rem;
   color: var(--text-secondary);
+}
+
+.ajuste-action-confirmacao {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: var(--status-ok-text);
 }
 
 .link-botao {

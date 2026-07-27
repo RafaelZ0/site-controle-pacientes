@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Wrench } from "lucide-react";
+import { Wrench, Check } from "lucide-react";
 import { supabase } from "../supabaseClient";
 
 export default function EnviarAjusteAction({ pacienteId }) {
@@ -7,6 +7,12 @@ export default function EnviarAjusteAction({ pacienteId }) {
   const [registroAberto, setRegistroAberto] = useState(undefined); // undefined = carregando
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [confirmacao, setConfirmacao] = useState(null);
+
+  function mostrarConfirmacao(texto) {
+    setConfirmacao(texto);
+    setTimeout(() => setConfirmacao(null), 3000);
+  }
 
   async function carregar() {
     const { data, error } = await supabase
@@ -46,6 +52,7 @@ export default function EnviarAjusteAction({ pacienteId }) {
       setError(error.message);
       return;
     }
+    mostrarConfirmacao("Enviado para ajustes.");
     carregar();
   }
 
@@ -61,6 +68,7 @@ export default function EnviarAjusteAction({ pacienteId }) {
       setError(error.message);
       return;
     }
+    mostrarConfirmacao("Envio para ajustes cancelado.");
     carregar();
   }
 
@@ -81,6 +89,12 @@ export default function EnviarAjusteAction({ pacienteId }) {
           <Wrench size={15} strokeWidth={1.75} />
           Enviar para ajustes
         </button>
+      )}
+      {confirmacao && (
+        <p className="ajuste-action-confirmacao">
+          <Check size={14} strokeWidth={2.5} />
+          {confirmacao}
+        </p>
       )}
       {error && <p className="error">{error}</p>}
     </div>

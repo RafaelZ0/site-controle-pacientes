@@ -37,6 +37,9 @@ const COLUNAS_PADRAO = Object.fromEntries(COLUNAS_DISPONIVEIS.map((c) => [c.key,
 
 export default function ExportarCsvModal({ dentistas, onClose }) {
   const { workspace } = useWorkspace();
+  const colunasVisiveis = COLUNAS_DISPONIVEIS.filter(
+    (c) => c.key !== "dentista_2_nome" || workspace === "curso"
+  );
   const [situacao, setSituacao] = useState("");
   const [dentistaId, setDentistaId] = useState("");
   const [etapa, setEtapa] = useState("");
@@ -95,7 +98,7 @@ export default function ExportarCsvModal({ dentistas, onClose }) {
   }
 
   async function exportar() {
-    const colunasEscolhidas = COLUNAS_DISPONIVEIS.filter((c) => colunas[c.key]);
+    const colunasEscolhidas = colunasVisiveis.filter((c) => colunas[c.key]);
     if (colunasEscolhidas.length === 0) {
       setError("Selecione ao menos uma coluna pra exportar.");
       return;
@@ -180,7 +183,7 @@ export default function ExportarCsvModal({ dentistas, onClose }) {
         <div>
           <span className="label-texto">Colunas a exportar</span>
           <div className="etapas-checklist exportar-colunas">
-            {COLUNAS_DISPONIVEIS.map((c) => (
+            {colunasVisiveis.map((c) => (
               <label key={c.key} className="checkbox-linha">
                 <input
                   type="checkbox"

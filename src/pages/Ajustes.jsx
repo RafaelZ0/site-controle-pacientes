@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Wrench, ChevronUp, ChevronDown } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { iniciais } from "../lib/avatar";
+import { etapaBadgeClasse } from "../lib/constants";
 import { useWorkspace } from "../lib/WorkspaceContext";
 
 const CAMPO_COMPARADORES = {
@@ -159,7 +160,11 @@ export default function Ajustes({ onEditPaciente }) {
                 <td>{a.dentistas?.nome ?? "—"}</td>
                 {workspace === "curso" && <td>{a.dentista2Nome ?? "—"}</td>}
                 <td>
-                  {a.etapaAtual && <span className="badge badge-neutro">{a.etapaAtual}</span>}
+                  {a.etapaAtual && (
+                    <span className={`badge ${etapaBadgeClasse(a.etapaAtual)}`}>
+                      {a.etapaAtual}
+                    </span>
+                  )}
                 </td>
                 <td>{formatDate(a.data)}</td>
                 <td>

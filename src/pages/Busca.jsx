@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Search, ChevronUp, ChevronDown, Download } from "lucide-react";
 import { supabase } from "../supabaseClient";
-import { ETAPAS } from "../lib/constants";
+import { ETAPAS, etapaBadgeClasse } from "../lib/constants";
 import { iniciais } from "../lib/avatar";
 import { useWorkspace } from "../lib/WorkspaceContext";
 import ResumoCards from "./ResumoCards";
@@ -213,7 +213,9 @@ export default function Busca({ onEditPaciente }) {
                   <td>{p.dentista_2_nome ?? "Sem dentista definido"}</td>
                 )}
                 <td>
-                  <span className="badge badge-neutro">{p.etapa_atual}</span>
+                  <span className={`badge ${etapaBadgeClasse(p.etapa_atual)}`}>
+                    {p.etapa_atual}
+                  </span>
                   {p.configuracao_pendente && (
                     <span className="badge badge-inadimplente badge-inline">
                       Config. pendente

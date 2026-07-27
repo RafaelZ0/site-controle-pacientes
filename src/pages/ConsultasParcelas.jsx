@@ -176,9 +176,10 @@ export default function ConsultasParcelas({ pacienteId }) {
     ? consultasOrdenadas
     : consultasOrdenadas.slice(0, LIMITE_PADRAO);
 
-  const parcelasOrdenadas = [...parcelas].sort(
-    (a, b) => prioridadeParcela(a, hoje) - prioridadeParcela(b, hoje) || a.numero - b.numero
-  );
+  // Ordenado só por número (não por status) pra não reordenar a lista toda
+  // debaixo do usuário assim que ele marca uma parcela como paga — a cor da
+  // linha já indica vencida/paga/pendente.
+  const parcelasOrdenadas = [...parcelas].sort((a, b) => a.numero - b.numero);
   const parcelasVisiveis = verTodasParcelas
     ? parcelasOrdenadas
     : parcelasOrdenadas.slice(0, LIMITE_PADRAO);
@@ -264,7 +265,16 @@ export default function ConsultasParcelas({ pacienteId }) {
             </thead>
             <tbody>
               {parcelasVisiveis.map((p) => (
-                <tr key={p.id}>
+                <tr
+                  key={p.id}
+                  className={
+                    p.paga
+                      ? "cp-row-paga"
+                      : p.data_vencimento < hoje
+                      ? "cp-row-atrasada"
+                      : ""
+                  }
+                >
                   <td>{p.numero}</td>
                   <td>{formatDate(p.data_vencimento)}</td>
                   <td>
@@ -416,12 +426,6 @@ export default function ConsultasParcelas({ pacienteId }) {
       )}
     </div>
   );
-}
-
-function prioridadeParcela(parcela, hojeISO) {
-  if (parcela.paga) return 2;
-  if (parcela.data_vencimento < hojeISO) return 0;
-  return 1;
 }
 
 function todayISO() {

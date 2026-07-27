@@ -188,8 +188,25 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
   }
 
   async function handleRegenerarPlano() {
+    const [{ count: consultasFeitas }, { count: parcelasPagas }] = await Promise.all([
+      supabase
+        .from("consultas")
+        .select("id", { count: "exact", head: true })
+        .eq("paciente_id", pacienteId)
+        .eq("realizada", true),
+      supabase
+        .from("parcelas")
+        .select("id", { count: "exact", head: true })
+        .eq("paciente_id", pacienteId)
+        .eq("paga", true),
+    ]);
+
     const confirmado = window.confirm(
-      "Isso vai apagar TODAS as consultas e parcelas deste paciente e recriar do zero — inclusive as já marcadas como realizadas/pagas, que serão perdidas. Essa ação não pode ser desfeita. Continuar?"
+      `Isso vai apagar TODAS as consultas e parcelas deste paciente e recriar do zero — inclusive ${
+        consultasFeitas ?? 0
+      } consulta(s) já realizada(s) e ${
+        parcelasPagas ?? 0
+      } parcela(s) já paga(s), que serão perdidas. Essa ação não pode ser desfeita. Continuar?`
     );
     if (!confirmado) return;
 
@@ -249,7 +266,7 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
       {workspace === "curso" ? (
         <>
           <label>
-            Dentista 1
+            Dentista 1 (opcional)
             <select
               value={form.dentista_id}
               onChange={(e) => updateField("dentista_id", e.target.value)}
@@ -264,7 +281,7 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
           </label>
 
           <label>
-            Dentista 2
+            Dentista 2 (opcional)
             <select
               value={form.dentista_2_id}
               onChange={(e) => updateField("dentista_2_id", e.target.value)}
@@ -398,7 +415,7 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
           </p>
           <button
             type="button"
-            className="btn-outline"
+            className="btn-danger-outline"
             onClick={handleRegenerarPlano}
             disabled={regenerando}
           >
