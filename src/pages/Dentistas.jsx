@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { useWorkspace } from "../lib/WorkspaceContext";
+import { ESPECIALIDADES, formatarEspecialidades } from "../lib/constants";
 
 function mensagemErro(error) {
   if (!error) return null;
@@ -49,6 +50,7 @@ export default function Dentistas() {
           <thead>
             <tr>
               <th>Nome</th>
+              {workspace === "curso" && <th>Especialidade</th>}
               <th>Status</th>
               <th></th>
             </tr>
@@ -57,6 +59,9 @@ export default function Dentistas() {
             {dentistas.map((d) => (
               <tr key={d.id}>
                 <td>{d.nome}</td>
+                {workspace === "curso" && (
+                  <td>{formatarEspecialidades(d.especialidades) ?? "—"}</td>
+                )}
                 <td>
                   <span className={`badge ${d.ativo ? "badge-adimplente" : "badge-neutro"}`}>
                     {d.ativo ? "Ativo" : "Inativo"}
@@ -71,7 +76,7 @@ export default function Dentistas() {
             ))}
             {dentistas.length === 0 && (
               <tr>
-                <td colSpan={3} className="estado-vazio">
+                <td colSpan={workspace === "curso" ? 4 : 3} className="estado-vazio">
                   <div className="estado-vazio-conteudo">
                     <span>Nenhum dentista cadastrado.</span>
                   </div>
@@ -117,8 +122,15 @@ export default function Dentistas() {
 function AdicionarDentistaModal({ onClose, onCriado }) {
   const { workspace } = useWorkspace();
   const [nome, setNome] = useState("");
+  const [especialidades, setEspecialidades] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  function toggleEspecialidade(esp) {
+    setEspecialidades((atual) =>
+      atual.includes(esp) ? atual.filter((e) => e !== esp) : [...atual, esp]
+    );
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -126,7 +138,7 @@ function AdicionarDentistaModal({ onClose, onCriado }) {
     setLoading(true);
     const { error } = await supabase
       .from("dentistas")
-      .insert({ nome: nome.trim(), workspace });
+      .insert({ nome: nome.trim(), workspace, especialidades });
     setLoading(false);
     if (error) {
       setError(mensagemErro(error));
@@ -152,6 +164,28 @@ function AdicionarDentistaModal({ onClose, onCriado }) {
           />
         </label>
 
+        {workspace === "curso" && (
+          <div>
+            <span className="label-texto">Especialidade</span>
+            <div className="etapas-checklist">
+              {ESPECIALIDADES.map((esp) => (
+                <label key={esp} className="checkbox-linha">
+                  <input
+                    type="checkbox"
+                    checked={especialidades.includes(esp)}
+                    onChange={() => toggleEspecialidade(esp)}
+                  />
+                  {esp === "ORTODONTIA" ? "Ortodontia" : "Implantodontia"}
+                </label>
+              ))}
+            </div>
+            <span className="label-ajuda">
+              Usado pra não deixar formar dupla de especialidades diferentes
+              no cadastro de paciente.
+            </span>
+          </div>
+        )}
+
         {error && <p className="error">{error}</p>}
 
         <div className="form-actions">
@@ -168,10 +202,18 @@ function AdicionarDentistaModal({ onClose, onCriado }) {
 }
 
 function EditarDentistaModal({ dentista, onClose, onEditado }) {
+  const { workspace } = useWorkspace();
   const [nome, setNome] = useState(dentista.nome);
   const [ativo, setAtivo] = useState(dentista.ativo);
+  const [especialidades, setEspecialidades] = useState(dentista.especialidades ?? []);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  function toggleEspecialidade(esp) {
+    setEspecialidades((atual) =>
+      atual.includes(esp) ? atual.filter((e) => e !== esp) : [...atual, esp]
+    );
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -179,7 +221,7 @@ function EditarDentistaModal({ dentista, onClose, onEditado }) {
     setLoading(true);
     const { error } = await supabase
       .from("dentistas")
-      .update({ nome: nome.trim(), ativo })
+      .update({ nome: nome.trim(), ativo, especialidades })
       .eq("id", dentista.id);
     setLoading(false);
     if (error) {
@@ -204,6 +246,24 @@ function EditarDentistaModal({ dentista, onClose, onEditado }) {
             autoFocus
           />
         </label>
+
+        {workspace === "curso" && (
+          <div>
+            <span className="label-texto">Especialidade</span>
+            <div className="etapas-checklist">
+              {ESPECIALIDADES.map((esp) => (
+                <label key={esp} className="checkbox-linha">
+                  <input
+                    type="checkbox"
+                    checked={especialidades.includes(esp)}
+                    onChange={() => toggleEspecialidade(esp)}
+                  />
+                  {esp === "ORTODONTIA" ? "Ortodontia" : "Implantodontia"}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
 
         <label className="checkbox-linha">
           <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} />

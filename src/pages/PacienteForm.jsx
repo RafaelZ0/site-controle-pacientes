@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Phone, IdCard, Calendar } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { useWorkspace, NOME_WORKSPACE, OUTRO_WORKSPACE } from "../lib/WorkspaceContext";
+import { especialidadesCompativeis, formatarEspecialidades } from "../lib/constants";
 import ExcluirPacienteModal from "./ExcluirPacienteModal";
 import TransferirPacienteModal from "./TransferirPacienteModal";
 
@@ -43,7 +44,7 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
   useEffect(() => {
     supabase
       .from("dentistas")
-      .select("id, nome")
+      .select("id, nome, especialidades")
       .eq("ativo", true)
       .eq("workspace", workspace)
       .order("nome")
@@ -105,14 +106,19 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
     setError(null);
     setInfo(null);
 
-    if (
-      workspace === "curso" &&
-      form.dentista_id &&
-      form.dentista_2_id &&
-      form.dentista_id === form.dentista_2_id
-    ) {
-      setError("Dentista 1 e Dentista 2 não podem ser a mesma pessoa.");
-      return;
+    if (workspace === "curso" && form.dentista_id && form.dentista_2_id) {
+      if (form.dentista_id === form.dentista_2_id) {
+        setError("Dentista 1 e Dentista 2 não podem ser a mesma pessoa.");
+        return;
+      }
+      const d1 = dentistas.find((d) => d.id === form.dentista_id);
+      const d2 = dentistas.find((d) => d.id === form.dentista_2_id);
+      if (!especialidadesCompativeis(d1?.especialidades, d2?.especialidades)) {
+        setError(
+          "Dentista 1 e Dentista 2 têm especialidades diferentes — a dupla precisa compartilhar ao menos uma especialidade."
+        );
+        return;
+      }
     }
 
     const precisaRecalcular = isEdit && criticosMudaram();
@@ -274,7 +280,9 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
               <option value="">Sem dentista definido</option>
               {dentistas.map((d) => (
                 <option key={d.id} value={d.id}>
-                  {d.nome}
+                  {formatarEspecialidades(d.especialidades)
+                    ? `${d.nome} — ${formatarEspecialidades(d.especialidades)}`
+                    : d.nome}
                 </option>
               ))}
             </select>
@@ -289,7 +297,9 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
               <option value="">Sem dentista definido</option>
               {dentistas.map((d) => (
                 <option key={d.id} value={d.id}>
-                  {d.nome}
+                  {formatarEspecialidades(d.especialidades)
+                    ? `${d.nome} — ${formatarEspecialidades(d.especialidades)}`
+                    : d.nome}
                 </option>
               ))}
             </select>

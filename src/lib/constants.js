@@ -29,3 +29,22 @@ const ETAPA_GRUPO = {
 export function etapaBadgeClasse(etapa) {
   return ETAPA_GRUPO[etapa] ?? "badge-neutro";
 }
+
+// Especialidade do dentista — só usado no Curso (alunos de
+// pós-graduação), pra não deixar montar dupla ortodontista+implantodontista.
+export const ESPECIALIDADES = ["ORTODONTIA", "IMPLANTODONTIA"];
+
+const ESPECIALIDADE_LABEL = {
+  ORTODONTIA: "Ortodontia",
+  IMPLANTODONTIA: "Implantodontia",
+};
+
+export function formatarEspecialidades(especialidades) {
+  if (!especialidades || especialidades.length === 0) return null;
+  return especialidades.map((e) => ESPECIALIDADE_LABEL[e] ?? e).join(" + ");
+}
+
+export function especialidadesCompativeis(a, b) {
+  if (!a?.length || !b?.length) return true;
+  return a.some((e) => b.includes(e));
+}
