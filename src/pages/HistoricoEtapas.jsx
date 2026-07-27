@@ -106,6 +106,12 @@ export default function HistoricoEtapas({ pacienteId }) {
       observacao: form.observacao.trim() || null,
       consulta_id: form.consulta_id || null,
     };
+    // AJUSTES é a única etapa que representa um trabalho pendente (não um
+    // fato já ocorrido) — nasce não concluída. Só se aplica na criação;
+    // editar um registro existente não deve mexer no status de conclusão.
+    if (!edicaoId && modalEtapa === "AJUSTES") {
+      payload.concluido = false;
+    }
 
     const result = edicaoId
       ? await supabase.from("historico_etapas").update(payload).eq("id", edicaoId)
@@ -199,6 +205,17 @@ export default function HistoricoEtapas({ pacienteId }) {
                                 const c = consultas.find((c) => c.id === entry.consulta_id);
                                 return c ? ` · consulta #${c.numero}` : "";
                               })()}
+                            {entry.etapa === "AJUSTES" && (
+                              <span
+                                className={`badge badge-inline ${
+                                  entry.concluido ? "badge-adimplente" : "badge-neutro"
+                                }`}
+                              >
+                                {entry.concluido
+                                  ? `Concluído em ${formatDate(entry.concluido_em?.slice(0, 10))}`
+                                  : "Pendente"}
+                              </span>
+                            )}
                           </span>
                           {entry.observacao && (
                             <p className="etapa-registro-obs">{entry.observacao}</p>

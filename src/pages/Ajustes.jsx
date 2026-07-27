@@ -1,44 +1,113 @@
-import { useEffect, useState } from "react";
-import { Wrench } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Wrench, ChevronUp, ChevronDown } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { iniciais } from "../lib/avatar";
+import { ETAPAS } from "../lib/constants";
+
+const CAMPO_COMPARADORES = {
+  nome_completo: (a, b) => comparaTexto(a.pacientes?.nome_completo, b.pacientes?.nome_completo),
+  dentista_nome: (a, b) => comparaTexto(a.dentistas?.nome, b.dentistas?.nome),
+  etapa_atual: (a, b) => comparaTexto(a.etapaAtual, b.etapaAtual),
+  data: (a, b) => comparaTexto(a.data, b.data),
+  status: (a, b) => (a.concluido === b.concluido ? 0 : a.concluido ? 1 : -1),
+};
 
 export default function Ajustes({ onEditPaciente }) {
-  const [solicitacoes, setSolicitacoes] = useState([]);
+  const [ajustes, setAjustes] = useState([]);
+  const [filtroStatus, setFiltroStatus] = useState("TODOS"); // TODOS | PENDENTES
+  const [sort, setSort] = useState({ campo: "data", dir: "asc" });
+  const [proximaEtapaEscolhida, setProximaEtapaEscolhida] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   async function carregar() {
     setLoading(true);
     setError(null);
+
     const { data, error } = await supabase
-      .from("solicitacoes_ajuste")
-      .select("*, pacientes(nome_completo, dentistas(nome))")
-      .order("criado_em");
+      .from("historico_etapas")
+      .select("id, paciente_id, dentista_id, data, concluido, concluido_em, dentistas(nome), pacientes(nome_completo)")
+      .eq("etapa", "AJUSTES");
+
+    if (error) {
+      setLoading(false);
+      setError(error.message);
+      return;
+    }
+
+    const pacienteIds = Array.from(new Set((data ?? []).map((a) => a.paciente_id)));
+    const { data: statusData, error: statusError } = await supabase
+      .from("pacientes_status")
+      .select("id, etapa_atual")
+      .in("id", pacienteIds.length ? pacienteIds : ["00000000-0000-0000-0000-000000000000"]);
+
     setLoading(false);
-    if (error) setError(error.message);
-    else setSolicitacoes(data ?? []);
+
+    if (statusError) {
+      setError(statusError.message);
+      return;
+    }
+
+    const etapaAtualPorPaciente = Object.fromEntries(
+      (statusData ?? []).map((p) => [p.id, p.etapa_atual])
+    );
+
+    setAjustes(
+      (data ?? []).map((a) => ({ ...a, etapaAtual: etapaAtualPorPaciente[a.paciente_id] ?? null }))
+    );
   }
 
   useEffect(() => {
     carregar();
   }, []);
 
-  async function toggleConcluido(solicitacao) {
-    const concluido = !solicitacao.concluido;
+  async function toggleConcluido(registro) {
+    const concluido = !registro.concluido;
     const { error } = await supabase
-      .from("solicitacoes_ajuste")
+      .from("historico_etapas")
       .update({ concluido, concluido_em: concluido ? new Date().toISOString() : null })
-      .eq("id", solicitacao.id);
+      .eq("id", registro.id);
     if (error) setError(error.message);
     else carregar();
   }
 
-  const solicitacoesOrdenadas = [...solicitacoes].sort((a, b) => {
-    if (a.concluido !== b.concluido) return a.concluido ? 1 : -1;
-    if (!a.concluido) return new Date(a.criado_em) - new Date(b.criado_em);
-    return new Date(b.concluido_em) - new Date(a.concluido_em);
-  });
+  async function definirProximaEtapa(registro) {
+    const etapa = proximaEtapaEscolhida[registro.id];
+    if (!etapa) return;
+    setError(null);
+    const { error } = await supabase.from("historico_etapas").insert({
+      paciente_id: registro.paciente_id,
+      etapa,
+      dentista_id: registro.dentista_id,
+      data: todayISO(),
+      concluido: etapa === "AJUSTES" ? false : true,
+    });
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setProximaEtapaEscolhida((s) => ({ ...s, [registro.id]: "" }));
+    carregar();
+  }
+
+  function ordenarPor(campo) {
+    setSort((s) =>
+      s.campo === campo ? { campo, dir: s.dir === "asc" ? "desc" : "asc" } : { campo, dir: "asc" }
+    );
+  }
+
+  const ajustesFiltrados = useMemo(
+    () => (filtroStatus === "PENDENTES" ? ajustes.filter((a) => !a.concluido) : ajustes),
+    [ajustes, filtroStatus]
+  );
+
+  const ajustesOrdenados = useMemo(() => {
+    const comparador = CAMPO_COMPARADORES[sort.campo];
+    if (!comparador) return ajustesFiltrados;
+    const ordenados = [...ajustesFiltrados].sort(comparador);
+    if (sort.dir === "desc") ordenados.reverse();
+    return ordenados;
+  }, [ajustesFiltrados, sort]);
 
   return (
     <div className="ajustes-page">
@@ -48,6 +117,13 @@ export default function Ajustes({ onEditPaciente }) {
         aqui, só marcados como feitos.
       </p>
 
+      <div className="filtros">
+        <select value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)}>
+          <option value="TODOS">Enviados e concluídos</option>
+          <option value="PENDENTES">Somente enviados</option>
+        </select>
+      </div>
+
       {error && <p className="error">{error}</p>}
       {loading && <p>Carregando...</p>}
 
@@ -55,52 +131,95 @@ export default function Ajustes({ onEditPaciente }) {
         <table className="pacientes-table">
           <thead>
             <tr>
-              <th>Nome</th>
-              <th>Dentista principal</th>
-              <th>Enviado em</th>
-              <th>Status</th>
+              <ThOrdenavel campo="nome_completo" sort={sort} onClick={ordenarPor}>
+                Nome
+              </ThOrdenavel>
+              <ThOrdenavel campo="dentista_nome" sort={sort} onClick={ordenarPor}>
+                Dentista principal
+              </ThOrdenavel>
+              <ThOrdenavel campo="etapa_atual" sort={sort} onClick={ordenarPor}>
+                Etapa atual
+              </ThOrdenavel>
+              <ThOrdenavel campo="data" sort={sort} onClick={ordenarPor}>
+                Enviado em
+              </ThOrdenavel>
+              <ThOrdenavel campo="status" sort={sort} onClick={ordenarPor}>
+                Status
+              </ThOrdenavel>
               <th>Concluído</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
-            {solicitacoesOrdenadas.map((s) => (
-              <tr key={s.id}>
+            {ajustesOrdenados.map((a) => (
+              <tr key={a.id}>
                 <td>
                   <div className="paciente-nome-cell">
-                    <span className="avatar">{iniciais(s.pacientes?.nome_completo)}</span>
-                    {s.pacientes?.nome_completo ?? "—"}
+                    <span className="avatar">{iniciais(a.pacientes?.nome_completo)}</span>
+                    {a.pacientes?.nome_completo ?? "—"}
                   </div>
                 </td>
-                <td>{s.pacientes?.dentistas?.nome ?? "—"}</td>
-                <td>{formatDate(s.criado_em)}</td>
+                <td>{a.dentistas?.nome ?? "—"}</td>
                 <td>
-                  <span className={`badge ${s.concluido ? "badge-adimplente" : "badge-neutro"}`}>
-                    {s.concluido ? "Concluído" : "Pendente"}
+                  {a.etapaAtual && <span className="badge badge-neutro">{a.etapaAtual}</span>}
+                </td>
+                <td>{formatDate(a.data)}</td>
+                <td>
+                  <span className={`badge ${a.concluido ? "badge-adimplente" : "badge-neutro"}`}>
+                    {a.concluido ? "Concluído" : "Pendente"}
                   </span>
+                  {a.concluido && a.etapaAtual === "AJUSTES" && (
+                    <div className="ajuste-proxima-etapa">
+                      <select
+                        value={proximaEtapaEscolhida[a.id] ?? ""}
+                        onChange={(e) =>
+                          setProximaEtapaEscolhida((s) => ({ ...s, [a.id]: e.target.value }))
+                        }
+                      >
+                        <option value="">Próxima etapa (opcional)</option>
+                        {ETAPAS.map((et) => (
+                          <option key={et} value={et}>
+                            {et}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        className="btn-outline"
+                        onClick={() => definirProximaEtapa(a)}
+                        disabled={!proximaEtapaEscolhida[a.id]}
+                      >
+                        Definir
+                      </button>
+                    </div>
+                  )}
                 </td>
                 <td>
                   <label className="check-touch">
                     <input
                       type="checkbox"
-                      checked={s.concluido}
-                      onChange={() => toggleConcluido(s)}
+                      checked={a.concluido}
+                      onChange={() => toggleConcluido(a)}
                     />
                   </label>
                 </td>
                 <td>
-                  <button type="button" onClick={() => onEditPaciente(s.paciente_id)}>
+                  <button type="button" onClick={() => onEditPaciente(a.paciente_id)}>
                     Ver paciente
                   </button>
                 </td>
               </tr>
             ))}
-            {!loading && solicitacoes.length === 0 && (
+            {!loading && ajustesOrdenados.length === 0 && (
               <tr>
-                <td colSpan={6} className="estado-vazio">
+                <td colSpan={7} className="estado-vazio">
                   <div className="estado-vazio-conteudo">
                     <Wrench size={28} strokeWidth={1.5} />
-                    <span>Nenhum paciente na fila de ajustes.</span>
+                    <span>
+                      {filtroStatus === "PENDENTES"
+                        ? "Nenhum paciente pendente de ajuste."
+                        : "Nenhum paciente na fila de ajustes."}
+                    </span>
                   </div>
                 </td>
               </tr>
@@ -112,7 +231,33 @@ export default function Ajustes({ onEditPaciente }) {
   );
 }
 
+function ThOrdenavel({ campo, sort, onClick, children }) {
+  const ativo = sort.campo === campo;
+  return (
+    <th className="th-ordenavel" onClick={() => onClick(campo)}>
+      <span className="th-ordenavel-conteudo">
+        {children}
+        {ativo &&
+          (sort.dir === "asc" ? (
+            <ChevronUp size={13} strokeWidth={2} />
+          ) : (
+            <ChevronDown size={13} strokeWidth={2} />
+          ))}
+      </span>
+    </th>
+  );
+}
+
+function comparaTexto(a, b) {
+  return (a ?? "").localeCompare(b ?? "", "pt-BR");
+}
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 function formatDate(value) {
   if (!value) return "—";
-  return new Date(value).toLocaleDateString("pt-BR");
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
 }

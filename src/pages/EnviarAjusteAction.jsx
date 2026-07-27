@@ -3,32 +3,44 @@ import { Wrench } from "lucide-react";
 import { supabase } from "../supabaseClient";
 
 export default function EnviarAjusteAction({ pacienteId }) {
-  const [solicitacaoAberta, setSolicitacaoAberta] = useState(undefined); // undefined = carregando
+  const [dentistaId, setDentistaId] = useState("");
+  const [registroAberto, setRegistroAberto] = useState(undefined); // undefined = carregando
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   async function carregar() {
     const { data, error } = await supabase
-      .from("solicitacoes_ajuste")
-      .select("id, criado_em")
+      .from("historico_etapas")
+      .select("id, data")
       .eq("paciente_id", pacienteId)
+      .eq("etapa", "AJUSTES")
       .eq("concluido", false)
       .maybeSingle();
     if (error) setError(error.message);
-    else setSolicitacaoAberta(data ?? null);
+    else setRegistroAberto(data ?? null);
   }
 
   useEffect(() => {
-    setSolicitacaoAberta(undefined);
+    setRegistroAberto(undefined);
+    supabase
+      .from("pacientes")
+      .select("dentista_id")
+      .eq("id", pacienteId)
+      .single()
+      .then(({ data }) => setDentistaId(data?.dentista_id ?? ""));
     carregar();
   }, [pacienteId]);
 
   async function enviar() {
     setError(null);
     setLoading(true);
-    const { error } = await supabase
-      .from("solicitacoes_ajuste")
-      .insert({ paciente_id: pacienteId });
+    const { error } = await supabase.from("historico_etapas").insert({
+      paciente_id: pacienteId,
+      etapa: "AJUSTES",
+      dentista_id: dentistaId,
+      data: todayISO(),
+      concluido: false,
+    });
     setLoading(false);
     if (error) {
       setError(error.message);
@@ -41,9 +53,9 @@ export default function EnviarAjusteAction({ pacienteId }) {
     setError(null);
     setLoading(true);
     const { error } = await supabase
-      .from("solicitacoes_ajuste")
+      .from("historico_etapas")
       .delete()
-      .eq("id", solicitacaoAberta.id);
+      .eq("id", registroAberto.id);
     setLoading(false);
     if (error) {
       setError(error.message);
@@ -52,14 +64,14 @@ export default function EnviarAjusteAction({ pacienteId }) {
     carregar();
   }
 
-  if (solicitacaoAberta === undefined) return null;
+  if (registroAberto === undefined) return null;
 
   return (
     <div className="ajuste-action">
-      {solicitacaoAberta ? (
+      {registroAberto ? (
         <p className="ajuste-action-status">
           <Wrench size={15} strokeWidth={1.75} />
-          Na fila de ajustes desde {formatDate(solicitacaoAberta.criado_em)} —{" "}
+          Na fila de ajustes desde {formatDate(registroAberto.data)} —{" "}
           <button type="button" className="link-botao" onClick={cancelar} disabled={loading}>
             cancelar envio
           </button>
@@ -75,7 +87,12 @@ export default function EnviarAjusteAction({ pacienteId }) {
   );
 }
 
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 function formatDate(value) {
-  const data = new Date(value);
-  return data.toLocaleDateString("pt-BR");
+  if (!value) return "—";
+  const [year, month, day] = value.split("-");
+  return `${day}/${month}/${year}`;
 }

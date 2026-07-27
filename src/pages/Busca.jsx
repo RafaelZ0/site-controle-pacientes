@@ -197,7 +197,7 @@ export default function Busca({ onEditPaciente }) {
                 <td>
                   <span className="badge badge-neutro">{p.etapa_atual}</span>
                   {p.configuracao_pendente && (
-                    <span className="badge badge-inadimplente badge-config-pendente">
+                    <span className="badge badge-inadimplente badge-inline">
                       Config. pendente
                     </span>
                   )}

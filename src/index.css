@@ -609,7 +609,7 @@ button:disabled {
   gap: 0.25rem;
 }
 
-.badge-config-pendente {
+.badge-inline {
   margin-left: 0.4rem;
 }
 
@@ -864,6 +864,24 @@ button:disabled {
   font-size: 0.85rem;
   line-height: 1.5;
   margin-bottom: 1.5rem;
+}
+
+.ajuste-proxima-etapa {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.ajuste-proxima-etapa select {
+  height: 32px;
+  font-size: 0.8rem;
+}
+
+.ajuste-proxima-etapa button {
+  height: 32px;
+  padding: 0 0.6rem;
+  font-size: 0.8rem;
 }
 
 .ajuste-action button.btn-outline {
