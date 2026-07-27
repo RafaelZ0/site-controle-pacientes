@@ -62,8 +62,14 @@ export default function ExportarCsvModal({ dentistas, onClose }) {
   useEffect(() => {
     let cancelado = false;
     aplicarFiltros(supabase.from("pacientes_status").select("id", { count: "exact", head: true }))
-      .then(({ count }) => {
-        if (!cancelado) setContagem(count ?? 0);
+      .then(({ count, error }) => {
+        if (cancelado) return;
+        if (error) {
+          setError(error.message);
+          setContagem(null);
+          return;
+        }
+        setContagem(count ?? 0);
       });
     return () => {
       cancelado = true;

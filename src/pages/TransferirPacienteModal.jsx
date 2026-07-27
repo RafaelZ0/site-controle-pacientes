@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
-import { useWorkspace } from "../lib/WorkspaceContext";
-
-const NOME_WORKSPACE = { clinica: "Clínica", curso: "Curso" };
-const OUTRO_WORKSPACE = { clinica: "curso", curso: "clinica" };
+import { useWorkspace, NOME_WORKSPACE, OUTRO_WORKSPACE } from "../lib/WorkspaceContext";
 
 export default function TransferirPacienteModal({
   pacienteId,

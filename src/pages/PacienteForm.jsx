@@ -1,12 +1,9 @@
 import { useEffect, useState } from "react";
 import { Phone, IdCard, Calendar } from "lucide-react";
 import { supabase } from "../supabaseClient";
-import { useWorkspace } from "../lib/WorkspaceContext";
+import { useWorkspace, NOME_WORKSPACE, OUTRO_WORKSPACE } from "../lib/WorkspaceContext";
 import ExcluirPacienteModal from "./ExcluirPacienteModal";
 import TransferirPacienteModal from "./TransferirPacienteModal";
-
-const NOME_WORKSPACE = { clinica: "Clínica", curso: "Curso" };
-const OUTRO_WORKSPACE = { clinica: "curso", curso: "clinica" };
 
 function mensagemErro(error) {
   if (error?.code === "23505" && error.message?.toLowerCase().includes("cpf")) {

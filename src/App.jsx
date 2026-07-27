@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Users, UserPlus, Stethoscope, Wrench, Menu, ArrowLeftRight } from "lucide-react";
 import { useAuth } from "./lib/AuthContext";
-import { useWorkspace } from "./lib/WorkspaceContext";
+import { useWorkspace, NOME_WORKSPACE, OUTRO_WORKSPACE } from "./lib/WorkspaceContext";
 import Login from "./pages/Login";
 import WorkspacePicker from "./pages/WorkspacePicker";
 import Busca from "./pages/Busca";
@@ -10,8 +10,6 @@ import PacienteEditar from "./pages/PacienteEditar";
 import Dentistas from "./pages/Dentistas";
 import Ajustes from "./pages/Ajustes";
 
-const NOME_WORKSPACE = { clinica: "Clínica", curso: "Curso" };
-const OUTRO_WORKSPACE = { clinica: "curso", curso: "clinica" };
 const WORDMARK_WORKSPACE = {
   clinica: "Instituto Odontológico Dr. Pablo Santos",
   curso: "Controle de Alunos Especialização - Instituto Dr. Pablo Santos",

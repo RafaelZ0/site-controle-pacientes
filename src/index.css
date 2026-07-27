@@ -59,6 +59,31 @@ h3 {
   color: var(--text-secondary);
 }
 
+.erro-fatal {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--canvas);
+  padding: 2rem;
+}
+
+.erro-fatal-card {
+  max-width: 420px;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra-card);
+  padding: 2.5rem 2rem;
+}
+
+.erro-fatal-card p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0.75rem 0 1.5rem;
+}
+
 /* Login: duas colunas */
 .login-page {
   min-height: 100vh;
