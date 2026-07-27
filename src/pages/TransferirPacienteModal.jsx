@@ -25,16 +25,22 @@ export default function TransferirPacienteModal({
       .then(({ data }) => setDentistas(data ?? []));
   }, [destino]);
 
+  const dentistaObrigatorio = destino === "clinica";
+
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!dentistaId) return;
+    if (dentistaObrigatorio && !dentistaId) return;
 
     setError(null);
     setLoading(true);
 
     const { error } = await supabase
       .from("pacientes")
-      .update({ workspace: destino, dentista_id: dentistaId })
+      .update({
+        workspace: destino,
+        dentista_id: dentistaId || null,
+        dentista_2_id: null,
+      })
       .eq("id", pacienteId);
 
     setLoading(false);
@@ -65,10 +71,10 @@ export default function TransferirPacienteModal({
             <select
               value={dentistaId}
               onChange={(e) => setDentistaId(e.target.value)}
-              required
+              required={dentistaObrigatorio}
             >
-              <option value="" disabled>
-                Selecione...
+              <option value={dentistaObrigatorio ? "" : ""} disabled={dentistaObrigatorio}>
+                {dentistaObrigatorio ? "Selecione..." : "Sem dentista definido"}
               </option>
               {dentistas.map((d) => (
                 <option key={d.id} value={d.id}>
@@ -77,18 +83,23 @@ export default function TransferirPacienteModal({
               ))}
             </select>
           </label>
-        ) : (
+        ) : dentistaObrigatorio ? (
           <p className="modal-aviso">
             Ainda não há nenhum dentista cadastrado em "{NOME_WORKSPACE[destino]}".
             Troque pra esse workspace e cadastre um na aba Dentistas antes de
             transferir.
+          </p>
+        ) : (
+          <p className="modal-aviso">
+            Ainda não há dentista cadastrado em "{NOME_WORKSPACE[destino]}" —
+            o paciente vai ficar sem dupla principal até você atribuir depois.
           </p>
         )}
 
         {error && <p className="error">{error}</p>}
 
         <div className="form-actions">
-          <button type="submit" disabled={!dentistaId || loading}>
+          <button type="submit" disabled={(dentistaObrigatorio && !dentistaId) || loading}>
             {loading ? "Transferindo..." : `Transferir para ${NOME_WORKSPACE[destino]}`}
           </button>
           <button type="button" className="btn-outline" onClick={onClose} disabled={loading}>

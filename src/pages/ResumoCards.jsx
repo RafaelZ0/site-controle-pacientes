@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Users, Clock, Wallet, CalendarDays, Wrench } from "lucide-react";
+import { Users, Clock, Wallet, CalendarDays, Wrench, UserX } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { useWorkspace } from "../lib/WorkspaceContext";
 
@@ -8,6 +8,7 @@ export default function ResumoCards({
   dentistaNome,
   statusFiltro,
   onToggleFiltro,
+  mostrarSemDupla,
 }) {
   const { workspace } = useWorkspace();
   const [stats, setStats] = useState({
@@ -16,6 +17,7 @@ export default function ResumoCards({
     inadimplentes: null,
     proximas7dias: null,
     configPendente: null,
+    semDupla: null,
   });
 
   useEffect(() => {
@@ -31,17 +33,23 @@ export default function ResumoCards({
           .from("pacientes_status")
           .select("id", { count: "exact", head: true })
           .eq("workspace", workspace);
-        if (dentistaId) q = q.eq("dentista_id", dentistaId);
+        if (dentistaId) {
+          q = q.or(`dentista_id.eq.${dentistaId},dentista_2_id.eq.${dentistaId}`);
+        }
         return q;
       }
 
-      const [totalRes, atrasoRes, inadimplentesRes, proximasRes, configRes] = await Promise.all([
-        base(),
-        base().eq("tem_consulta_atrasada", true),
-        base().eq("status_pagamento", "INADIMPLENTE"),
-        base().gte("proxima_consulta", hojeISO).lte("proxima_consulta", em7ISO),
-        base().eq("configuracao_pendente", true),
-      ]);
+      const [totalRes, atrasoRes, inadimplentesRes, proximasRes, configRes, semDuplaRes] =
+        await Promise.all([
+          base(),
+          base().eq("tem_consulta_atrasada", true),
+          base().eq("status_pagamento", "INADIMPLENTE"),
+          base().gte("proxima_consulta", hojeISO).lte("proxima_consulta", em7ISO),
+          base().eq("configuracao_pendente", true),
+          mostrarSemDupla
+            ? base().or("dentista_id.is.null,dentista_2_id.is.null")
+            : Promise.resolve({ count: null }),
+        ]);
 
       setStats({
         total: totalRes.count ?? 0,
@@ -49,10 +57,11 @@ export default function ResumoCards({
         inadimplentes: inadimplentesRes.count ?? 0,
         proximas7dias: proximasRes.count ?? 0,
         configPendente: configRes.count ?? 0,
+        semDupla: semDuplaRes.count ?? 0,
       });
     }
     carregar();
-  }, [workspace, dentistaId]);
+  }, [workspace, dentistaId, mostrarSemDupla]);
 
   const cards = [
     { label: "Total de pacientes", valor: stats.total, Icon: Users, acento: "", filtro: null },
@@ -84,6 +93,17 @@ export default function ResumoCards({
       acento: "acento-alerta",
       filtro: "CONFIG_PENDENTE",
     },
+    ...(mostrarSemDupla
+      ? [
+          {
+            label: "Sem dupla principal",
+            valor: stats.semDupla,
+            Icon: UserX,
+            acento: "acento-alerta",
+            filtro: "SEM_DUPLA",
+          },
+        ]
+      : []),
   ];
 
   return (

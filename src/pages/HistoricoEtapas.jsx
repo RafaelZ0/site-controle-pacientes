@@ -41,10 +41,10 @@ export default function HistoricoEtapas({ pacienteId }) {
 
     supabase
       .from("pacientes")
-      .select("dentista_id")
+      .select("dentista_id, dentista_2_id")
       .eq("id", pacienteId)
       .single()
-      .then(({ data }) => setDentistaPadrao(data?.dentista_id ?? ""));
+      .then(({ data }) => setDentistaPadrao(data?.dentista_id ?? data?.dentista_2_id ?? ""));
 
     supabase
       .from("consultas")

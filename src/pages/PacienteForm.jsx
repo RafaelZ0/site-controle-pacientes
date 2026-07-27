@@ -17,6 +17,7 @@ const initialForm = {
   telefone: "",
   cpf: "",
   dentista_id: "",
+  dentista_2_id: "",
   data_inicio: "",
   num_parcelas: "",
   num_consultas: "",
@@ -74,7 +75,8 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
           nome_completo: data.nome_completo,
           telefone: data.telefone ?? "",
           cpf: data.cpf ?? "",
-          dentista_id: data.dentista_id,
+          dentista_id: data.dentista_id ?? "",
+          dentista_2_id: data.dentista_2_id ?? "",
           data_inicio: data.data_inicio,
           num_parcelas: data.num_parcelas,
           num_consultas: data.num_consultas,
@@ -103,6 +105,16 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
     setError(null);
     setInfo(null);
 
+    if (
+      workspace === "curso" &&
+      form.dentista_id &&
+      form.dentista_2_id &&
+      form.dentista_id === form.dentista_2_id
+    ) {
+      setError("Dentista 1 e Dentista 2 não podem ser a mesma pessoa.");
+      return;
+    }
+
     const precisaRecalcular = isEdit && criticosMudaram();
 
     if (precisaRecalcular && !avisoRecalculo) {
@@ -116,7 +128,8 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
       nome_completo: form.nome_completo.trim(),
       telefone: form.telefone.trim() || null,
       cpf: form.cpf.trim() || null,
-      dentista_id: form.dentista_id,
+      dentista_id: form.dentista_id || null,
+      dentista_2_id: form.dentista_2_id || null,
       data_inicio: form.data_inicio,
       num_parcelas: Number(form.num_parcelas),
       num_consultas: Number(form.num_consultas),
@@ -157,7 +170,7 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
       const { error: etapaError } = await supabase.from("historico_etapas").insert({
         paciente_id: data.id,
         etapa: "AVALIAÇÃO",
-        dentista_id: payload.dentista_id,
+        dentista_id: payload.dentista_id ?? payload.dentista_2_id,
         data: payload.data_inicio,
       });
       if (etapaError) {
@@ -233,23 +246,61 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
         />
       </label>
 
-      <label>
-        Dentista responsável
-        <select
-          value={form.dentista_id}
-          onChange={(e) => updateField("dentista_id", e.target.value)}
-          required
-        >
-          <option value="" disabled>
-            Selecione...
-          </option>
-          {dentistas.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.nome}
+      {workspace === "curso" ? (
+        <>
+          <label>
+            Dentista 1
+            <select
+              value={form.dentista_id}
+              onChange={(e) => updateField("dentista_id", e.target.value)}
+            >
+              <option value="">Sem dentista definido</option>
+              {dentistas.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Dentista 2
+            <select
+              value={form.dentista_2_id}
+              onChange={(e) => updateField("dentista_2_id", e.target.value)}
+            >
+              <option value="">Sem dentista definido</option>
+              {dentistas.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.nome}
+                </option>
+              ))}
+            </select>
+          </label>
+          <span className="label-ajuda">
+            A dupla principal pode ser definida depois — o paciente aparece em
+            "Sem dupla principal" em Pacientes enquanto faltar um dos dois.
+          </span>
+        </>
+      ) : (
+        <label>
+          Dentista responsável
+          <select
+            value={form.dentista_id}
+            onChange={(e) => updateField("dentista_id", e.target.value)}
+            required
+          >
+            <option value="" disabled>
+              Selecione...
             </option>
-          ))}
-        </select>
-      </label>
+            {dentistas.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.nome}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
 
       <label>
         <span className="label-texto">

@@ -10,6 +10,7 @@ import ExportarCsvModal from "./ExportarCsvModal";
 const CAMPO_COMPARADORES = {
   nome_completo: (a, b) => comparaTexto(a.nome_completo, b.nome_completo),
   dentista_nome: (a, b) => comparaTexto(a.dentista_nome, b.dentista_nome),
+  dentista_2_nome: (a, b) => comparaTexto(a.dentista_2_nome, b.dentista_2_nome),
   etapa_atual: (a, b) => ETAPAS.indexOf(a.etapa_atual) - ETAPAS.indexOf(b.etapa_atual),
   data_inicio: (a, b) => comparaData(a.data_inicio, b.data_inicio),
   data_fim_prevista: (a, b) => comparaData(a.data_fim_prevista, b.data_fim_prevista),
@@ -49,7 +50,9 @@ export default function Busca({ onEditPaciente }) {
       .eq("workspace", workspace)
       .order("nome_completo");
 
-    if (dentistaId) query = query.eq("dentista_id", dentistaId);
+    if (dentistaId) {
+      query = query.or(`dentista_id.eq.${dentistaId},dentista_2_id.eq.${dentistaId}`);
+    }
     if (etapa) query = query.eq("etapa_atual", etapa);
     if (busca.trim()) {
       // Escapa aspas e tira % pra não interferir no curinga do ilike; o
@@ -73,6 +76,8 @@ export default function Busca({ onEditPaciente }) {
         .lte("proxima_consulta", em7dias.toISOString().slice(0, 10));
     } else if (statusFiltro === "CONFIG_PENDENTE") {
       query = query.eq("configuracao_pendente", true);
+    } else if (statusFiltro === "SEM_DUPLA") {
+      query = query.or("dentista_id.is.null,dentista_2_id.is.null");
     }
 
     const timeout = setTimeout(() => {
@@ -119,6 +124,7 @@ export default function Busca({ onEditPaciente }) {
         dentistaNome={dentistaSelecionado?.nome}
         statusFiltro={statusFiltro}
         onToggleFiltro={alternarStatusFiltro}
+        mostrarSemDupla={workspace === "curso"}
       />
 
       <div className="filtros">
@@ -168,8 +174,13 @@ export default function Busca({ onEditPaciente }) {
                 Nome
               </ThOrdenavel>
               <ThOrdenavel campo="dentista_nome" sort={sort} onClick={ordenarPor}>
-                Dentista
+                {workspace === "curso" ? "Dentista 1" : "Dentista"}
               </ThOrdenavel>
+              {workspace === "curso" && (
+                <ThOrdenavel campo="dentista_2_nome" sort={sort} onClick={ordenarPor}>
+                  Dentista 2
+                </ThOrdenavel>
+              )}
               <ThOrdenavel campo="etapa_atual" sort={sort} onClick={ordenarPor}>
                 Etapa
               </ThOrdenavel>
@@ -197,7 +208,10 @@ export default function Busca({ onEditPaciente }) {
                     {p.nome_completo}
                   </div>
                 </td>
-                <td>{p.dentista_nome}</td>
+                <td>{p.dentista_nome ?? "Sem dentista definido"}</td>
+                {workspace === "curso" && (
+                  <td>{p.dentista_2_nome ?? "Sem dentista definido"}</td>
+                )}
                 <td>
                   <span className="badge badge-neutro">{p.etapa_atual}</span>
                   {p.configuracao_pendente && (
@@ -223,7 +237,7 @@ export default function Busca({ onEditPaciente }) {
             ))}
             {!loading && pacientes.length === 0 && (
               <tr>
-                <td colSpan={8} className="estado-vazio">
+                <td colSpan={workspace === "curso" ? 9 : 8} className="estado-vazio">
                   <div className="estado-vazio-conteudo">
                     <Search size={28} strokeWidth={1.5} />
                     <span>Nenhum paciente encontrado.</span>

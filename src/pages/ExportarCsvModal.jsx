@@ -9,6 +9,7 @@ const COLUNAS_DISPONIVEIS = [
   { key: "telefone", label: "Telefone", valor: (p) => p.telefone },
   { key: "cpf", label: "CPF", valor: (p) => p.cpf },
   { key: "dentista_nome", label: "Dentista", valor: (p) => p.dentista_nome },
+  { key: "dentista_2_nome", label: "Dentista 2", valor: (p) => p.dentista_2_nome },
   { key: "etapa_atual", label: "Etapa", valor: (p) => p.etapa_atual },
   { key: "data_inicio", label: "Início", valor: (p) => formatDate(p.data_inicio) },
   {
@@ -78,7 +79,9 @@ export default function ExportarCsvModal({ dentistas, onClose }) {
 
   function aplicarFiltros(query) {
     let q = query.eq("workspace", workspace);
-    if (dentistaId) q = q.eq("dentista_id", dentistaId);
+    if (dentistaId) {
+      q = q.or(`dentista_id.eq.${dentistaId},dentista_2_id.eq.${dentistaId}`);
+    }
     if (etapa) q = q.eq("etapa_atual", etapa);
     if (situacao === "EM_ATRASO") q = q.eq("tem_consulta_atrasada", true);
     else if (situacao === "INADIMPLENTE") q = q.eq("status_pagamento", "INADIMPLENTE");

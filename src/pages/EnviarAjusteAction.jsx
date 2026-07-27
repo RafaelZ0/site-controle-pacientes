@@ -24,10 +24,10 @@ export default function EnviarAjusteAction({ pacienteId }) {
     setRegistroAberto(undefined);
     supabase
       .from("pacientes")
-      .select("dentista_id")
+      .select("dentista_id, dentista_2_id")
       .eq("id", pacienteId)
       .single()
-      .then(({ data }) => setDentistaId(data?.dentista_id ?? ""));
+      .then(({ data }) => setDentistaId(data?.dentista_id ?? data?.dentista_2_id ?? ""));
     carregar();
   }, [pacienteId]);
 
@@ -37,7 +37,7 @@ export default function EnviarAjusteAction({ pacienteId }) {
     const { error } = await supabase.from("historico_etapas").insert({
       paciente_id: pacienteId,
       etapa: "AJUSTES",
-      dentista_id: dentistaId,
+      dentista_id: dentistaId || null,
       data: todayISO(),
       concluido: false,
     });
