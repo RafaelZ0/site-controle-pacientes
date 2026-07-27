@@ -3,7 +3,6 @@ import { supabase } from "../supabaseClient";
 
 export default function ExcluirPacienteModal({ pacienteId, pacienteNome, onClose, onDeleted }) {
   const [confirmNome, setConfirmNome] = useState("");
-  const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -17,19 +16,12 @@ export default function ExcluirPacienteModal({ pacienteId, pacienteNome, onClose
     setError(null);
     setLoading(true);
 
-    const { error } = await supabase.rpc("excluir_paciente_admin", {
-      p_paciente_id: pacienteId,
-      p_senha: senha,
-    });
+    const { error } = await supabase.from("pacientes").delete().eq("id", pacienteId);
 
     setLoading(false);
 
     if (error) {
-      setError(
-        error.message?.toLowerCase().includes("incorreta")
-          ? "Senha de administrador incorreta."
-          : error.message
-      );
+      setError(error.message);
       return;
     }
 
@@ -59,16 +51,6 @@ export default function ExcluirPacienteModal({ pacienteId, pacienteNome, onClose
             onChange={(e) => setConfirmNome(e.target.value)}
             placeholder={pacienteNome}
             autoFocus
-          />
-        </label>
-
-        <label>
-          Senha de administrador
-          <input
-            type="password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            required
           />
         </label>
 

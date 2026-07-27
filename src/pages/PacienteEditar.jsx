@@ -8,14 +8,18 @@ import ConsultasParcelas from "./ConsultasParcelas";
 export default function PacienteEditar({ pacienteId, onSaved, onCancel }) {
   const [aba, setAba] = useState("status");
   const [nome, setNome] = useState("");
+  const [configuracaoPendente, setConfiguracaoPendente] = useState(false);
 
   useEffect(() => {
     supabase
-      .from("pacientes")
-      .select("nome_completo")
+      .from("pacientes_status")
+      .select("nome_completo, configuracao_pendente")
       .eq("id", pacienteId)
       .single()
-      .then(({ data }) => setNome(data?.nome_completo ?? ""));
+      .then(({ data }) => {
+        setNome(data?.nome_completo ?? "");
+        setConfiguracaoPendente(Boolean(data?.configuracao_pendente));
+      });
   }, [pacienteId]);
 
   return (
@@ -24,6 +28,14 @@ export default function PacienteEditar({ pacienteId, onSaved, onCancel }) {
         {nome && <span className="avatar avatar-lg">{iniciais(nome)}</span>}
         <h2>{nome || "Editar paciente"}</h2>
       </div>
+
+      {configuracaoPendente && (
+        <p className="aviso-config-pendente">
+          Configuração pendente — defina o nº de parcelas e de consultas na
+          aba "Dados cadastrais" pra gerar o plano de consultas/parcelas
+          deste paciente.
+        </p>
+      )}
 
       <div className="tabs">
         <button

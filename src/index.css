@@ -324,6 +324,12 @@ label {
   color: var(--text-secondary);
 }
 
+.label-ajuda {
+  font-weight: 400;
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
 input,
 select {
   height: 40px;
@@ -412,16 +418,28 @@ button:disabled {
 }
 
 /* Cards de resumo */
+.resumo-cards-wrap {
+  margin-bottom: 1.5rem;
+}
+
+.resumo-cards-subtitulo {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin: 0 0 0.5rem;
+}
+
 .resumo-cards {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1.5rem;
   flex-wrap: wrap;
 }
 
 .stat-card {
   flex: 1;
   min-width: 170px;
+  height: auto;
+  width: auto;
+  text-align: left;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--raio);
@@ -430,12 +448,18 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  transition: box-shadow 0.18s ease, transform 0.18s ease;
+  transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
 }
 
 .stat-card:hover {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
   transform: translateY(-1px);
+  color: inherit;
+}
+
+.stat-card-ativo {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 2px rgba(14, 62, 108, 0.15);
 }
 
 .stat-card-topo {
@@ -555,6 +579,38 @@ button:disabled {
 .filtros input {
   flex: 1;
   min-width: 220px;
+}
+
+.btn-exportar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.contagem-resultados {
+  margin-top: 0.75rem;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.th-ordenavel {
+  cursor: pointer;
+  user-select: none;
+}
+
+.th-ordenavel:hover {
+  color: var(--navy);
+}
+
+.th-ordenavel-conteudo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.badge-config-pendente {
+  margin-left: 0.4rem;
 }
 
 .pacientes-table-wrap {
@@ -794,6 +850,16 @@ button:disabled {
   line-height: 1.5;
 }
 
+.aviso-config-pendente {
+  background: var(--status-alerta-bg);
+  color: var(--status-alerta-text);
+  border-radius: var(--raio);
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
 /* Histórico de etapas: progresso + chips compactos + modal */
 .historico-etapas {
   margin-top: 1.75rem;
@@ -989,6 +1055,31 @@ button:disabled {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
+}
+
+.modal-card-largo {
+  width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.exportar-filtros {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.exportar-colunas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.4rem;
+  max-height: none;
+}
+
+.exportar-contagem {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  margin: 0;
 }
 
 .modal-aviso {

@@ -4,9 +4,6 @@ import { supabase } from "../supabaseClient";
 
 function mensagemErro(error) {
   if (!error) return null;
-  if (error.message?.toLowerCase().includes("incorreta")) {
-    return "Senha de administrador incorreta.";
-  }
   if (error.code === "23505") {
     return "Já existe um dentista com esse nome.";
   }
@@ -80,11 +77,11 @@ export default function Dentistas() {
       </div>
 
       <p className="dentistas-nota">
-        Criar ou editar um dentista exige a senha de administrador. Desativar não apaga
-        nada — o dentista só some das opções de "dentista responsável" ao cadastrar um
-        paciente novo; pacientes já ligados a ele continuam normalmente. Isso também não
-        cria nem remove o login de acesso ao site — isso continua sendo feito no painel
-        do Supabase (Authentication → Users).
+        Desativar não apaga nada — o dentista só some das opções de "dentista
+        responsável" ao cadastrar um paciente novo; pacientes já ligados a ele
+        continuam normalmente. Isso também não cria nem remove o login de acesso
+        ao site — isso continua sendo feito no painel do Supabase
+        (Authentication → Users).
       </p>
 
       {mostrarAdicionar && (
@@ -113,7 +110,6 @@ export default function Dentistas() {
 
 function AdicionarDentistaModal({ onClose, onCriado }) {
   const [nome, setNome] = useState("");
-  const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -121,10 +117,7 @@ function AdicionarDentistaModal({ onClose, onCriado }) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const { error } = await supabase.rpc("criar_dentista_admin", {
-      p_nome: nome.trim(),
-      p_senha: senha,
-    });
+    const { error } = await supabase.from("dentistas").insert({ nome: nome.trim() });
     setLoading(false);
     if (error) {
       setError(mensagemErro(error));
@@ -150,16 +143,6 @@ function AdicionarDentistaModal({ onClose, onCriado }) {
           />
         </label>
 
-        <label>
-          Senha de administrador
-          <input
-            type="password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            required
-          />
-        </label>
-
         {error && <p className="error">{error}</p>}
 
         <div className="form-actions">
@@ -178,7 +161,6 @@ function AdicionarDentistaModal({ onClose, onCriado }) {
 function EditarDentistaModal({ dentista, onClose, onEditado }) {
   const [nome, setNome] = useState(dentista.nome);
   const [ativo, setAtivo] = useState(dentista.ativo);
-  const [senha, setSenha] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -186,12 +168,10 @@ function EditarDentistaModal({ dentista, onClose, onEditado }) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const { error } = await supabase.rpc("editar_dentista_admin", {
-      p_id: dentista.id,
-      p_nome: nome.trim(),
-      p_ativo: ativo,
-      p_senha: senha,
-    });
+    const { error } = await supabase
+      .from("dentistas")
+      .update({ nome: nome.trim(), ativo })
+      .eq("id", dentista.id);
     setLoading(false);
     if (error) {
       setError(mensagemErro(error));
@@ -219,16 +199,6 @@ function EditarDentistaModal({ dentista, onClose, onEditado }) {
         <label className="checkbox-linha">
           <input type="checkbox" checked={ativo} onChange={(e) => setAtivo(e.target.checked)} />
           Ativo (aparece nas opções de dentista responsável)
-        </label>
-
-        <label>
-          Senha de administrador
-          <input
-            type="password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            required
-          />
         </label>
 
         {error && <p className="error">{error}</p>}

@@ -263,22 +263,30 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
         Nº de parcelas
         <input
           type="number"
-          min="1"
+          min="0"
           value={form.num_parcelas}
           onChange={(e) => updateField("num_parcelas", e.target.value)}
           required
         />
+        <span className="label-ajuda">
+          Ainda não sabe? Deixe 0 — o paciente fica marcado como "configuração
+          pendente" até você definir.
+        </span>
       </label>
 
       <label>
         Nº de consultas
         <input
           type="number"
-          min="1"
+          min="0"
           value={form.num_consultas}
           onChange={(e) => updateField("num_consultas", e.target.value)}
           required
         />
+        <span className="label-ajuda">
+          Ainda não sabe? Deixe 0 — o paciente fica marcado como "configuração
+          pendente" até você definir.
+        </span>
       </label>
 
       {error && <p className="error">{error}</p>}
@@ -348,7 +356,7 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
           <p>
             Excluir o paciente apaga permanentemente o cadastro e tudo que
             está ligado a ele (consultas, parcelas, histórico de etapas).
-            Use só em casos de duplicidade — exige senha de administrador.
+            Use só em casos de duplicidade.
           </p>
           <button
             type="button"
