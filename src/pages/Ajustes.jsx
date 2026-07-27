@@ -7,6 +7,7 @@ import { useWorkspace } from "../lib/WorkspaceContext";
 const CAMPO_COMPARADORES = {
   nome_completo: (a, b) => comparaTexto(a.pacientes?.nome_completo, b.pacientes?.nome_completo),
   dentista_nome: (a, b) => comparaTexto(a.dentistas?.nome, b.dentistas?.nome),
+  dentista_2_nome: (a, b) => comparaTexto(a.dentista2Nome, b.dentista2Nome),
   etapa_atual: (a, b) => comparaTexto(a.etapaAtual, b.etapaAtual),
   data: (a, b) => comparaTexto(a.data, b.data),
   status: (a, b) => (a.concluido === b.concluido ? 0 : a.concluido ? 1 : -1),
@@ -41,7 +42,7 @@ export default function Ajustes({ onEditPaciente }) {
     const pacienteIds = Array.from(new Set((data ?? []).map((a) => a.paciente_id)));
     const { data: statusData, error: statusError } = await supabase
       .from("pacientes_status")
-      .select("id, etapa_atual")
+      .select("id, etapa_atual, dentista_2_nome")
       .in("id", pacienteIds.length ? pacienteIds : ["00000000-0000-0000-0000-000000000000"]);
 
     setLoading(false);
@@ -54,9 +55,16 @@ export default function Ajustes({ onEditPaciente }) {
     const etapaAtualPorPaciente = Object.fromEntries(
       (statusData ?? []).map((p) => [p.id, p.etapa_atual])
     );
+    const dentista2NomePorPaciente = Object.fromEntries(
+      (statusData ?? []).map((p) => [p.id, p.dentista_2_nome])
+    );
 
     setAjustes(
-      (data ?? []).map((a) => ({ ...a, etapaAtual: etapaAtualPorPaciente[a.paciente_id] ?? null }))
+      (data ?? []).map((a) => ({
+        ...a,
+        etapaAtual: etapaAtualPorPaciente[a.paciente_id] ?? null,
+        dentista2Nome: dentista2NomePorPaciente[a.paciente_id] ?? null,
+      }))
     );
   }
 
@@ -119,8 +127,13 @@ export default function Ajustes({ onEditPaciente }) {
                 Nome
               </ThOrdenavel>
               <ThOrdenavel campo="dentista_nome" sort={sort} onClick={ordenarPor}>
-                Dentista principal
+                {workspace === "curso" ? "Dentista 1" : "Dentista principal"}
               </ThOrdenavel>
+              {workspace === "curso" && (
+                <ThOrdenavel campo="dentista_2_nome" sort={sort} onClick={ordenarPor}>
+                  Dentista 2
+                </ThOrdenavel>
+              )}
               <ThOrdenavel campo="etapa_atual" sort={sort} onClick={ordenarPor}>
                 Etapa atual
               </ThOrdenavel>
@@ -144,6 +157,7 @@ export default function Ajustes({ onEditPaciente }) {
                   </div>
                 </td>
                 <td>{a.dentistas?.nome ?? "—"}</td>
+                {workspace === "curso" && <td>{a.dentista2Nome ?? "—"}</td>}
                 <td>
                   {a.etapaAtual && <span className="badge badge-neutro">{a.etapaAtual}</span>}
                 </td>
@@ -171,7 +185,7 @@ export default function Ajustes({ onEditPaciente }) {
             ))}
             {!loading && ajustesOrdenados.length === 0 && (
               <tr>
-                <td colSpan={7} className="estado-vazio">
+                <td colSpan={workspace === "curso" ? 8 : 7} className="estado-vazio">
                   <div className="estado-vazio-conteudo">
                     <Wrench size={28} strokeWidth={1.5} />
                     <span>
