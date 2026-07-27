@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Wrench, ChevronUp, ChevronDown } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { iniciais } from "../lib/avatar";
-import { ETAPAS } from "../lib/constants";
 
 const CAMPO_COMPARADORES = {
   nome_completo: (a, b) => comparaTexto(a.pacientes?.nome_completo, b.pacientes?.nome_completo),
@@ -16,7 +15,6 @@ export default function Ajustes({ onEditPaciente }) {
   const [ajustes, setAjustes] = useState([]);
   const [filtroStatus, setFiltroStatus] = useState("TODOS"); // TODOS | PENDENTES
   const [sort, setSort] = useState({ campo: "data", dir: "asc" });
-  const [proximaEtapaEscolhida, setProximaEtapaEscolhida] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -69,25 +67,6 @@ export default function Ajustes({ onEditPaciente }) {
       .eq("id", registro.id);
     if (error) setError(error.message);
     else carregar();
-  }
-
-  async function definirProximaEtapa(registro) {
-    const etapa = proximaEtapaEscolhida[registro.id];
-    if (!etapa) return;
-    setError(null);
-    const { error } = await supabase.from("historico_etapas").insert({
-      paciente_id: registro.paciente_id,
-      etapa,
-      dentista_id: registro.dentista_id,
-      data: todayISO(),
-      concluido: etapa === "AJUSTES" ? false : true,
-    });
-    if (error) {
-      setError(error.message);
-      return;
-    }
-    setProximaEtapaEscolhida((s) => ({ ...s, [registro.id]: "" }));
-    carregar();
   }
 
   function ordenarPor(campo) {
@@ -168,31 +147,6 @@ export default function Ajustes({ onEditPaciente }) {
                   <span className={`badge ${a.concluido ? "badge-adimplente" : "badge-neutro"}`}>
                     {a.concluido ? "Concluído" : "Pendente"}
                   </span>
-                  {a.concluido && a.etapaAtual === "AJUSTES" && (
-                    <div className="ajuste-proxima-etapa">
-                      <select
-                        value={proximaEtapaEscolhida[a.id] ?? ""}
-                        onChange={(e) =>
-                          setProximaEtapaEscolhida((s) => ({ ...s, [a.id]: e.target.value }))
-                        }
-                      >
-                        <option value="">Próxima etapa (opcional)</option>
-                        {ETAPAS.map((et) => (
-                          <option key={et} value={et}>
-                            {et}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        className="btn-outline"
-                        onClick={() => definirProximaEtapa(a)}
-                        disabled={!proximaEtapaEscolhida[a.id]}
-                      >
-                        Definir
-                      </button>
-                    </div>
-                  )}
                 </td>
                 <td>
                   <label className="check-touch">
@@ -250,10 +204,6 @@ function ThOrdenavel({ campo, sort, onClick, children }) {
 
 function comparaTexto(a, b) {
   return (a ?? "").localeCompare(b ?? "", "pt-BR");
-}
-
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
 }
 
 function formatDate(value) {
