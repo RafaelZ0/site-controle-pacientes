@@ -12,6 +12,10 @@ import Ajustes from "./pages/Ajustes";
 
 const NOME_WORKSPACE = { clinica: "Clínica", curso: "Curso" };
 const OUTRO_WORKSPACE = { clinica: "curso", curso: "clinica" };
+const WORDMARK_WORKSPACE = {
+  clinica: "Instituto Odontológico Dr. Pablo Santos",
+  curso: "Controle de Alunos Especialização - Instituto Dr. Pablo Santos",
+};
 
 export default function App() {
   const { session, loading, signOut } = useAuth();
@@ -41,6 +45,16 @@ export default function App() {
   function irParaAjustes() {
     setView({ name: "ajustes" });
     setMenuAberto(false);
+  }
+
+  function trocarWorkspace() {
+    const destino = OUTRO_WORKSPACE[workspace];
+    const confirmado = window.confirm(
+      `Trocar para a Gestão de Pacientes do ${NOME_WORKSPACE[destino]}?`
+    );
+    if (!confirmado) return;
+    setWorkspace(destino);
+    window.location.reload();
   }
 
   const navItens = (
@@ -83,11 +97,7 @@ export default function App() {
       <div className="sidebar-footer">
         <div className="sidebar-footer-workspace">
           <span>{NOME_WORKSPACE[workspace]}</span>
-          <button
-            type="button"
-            className="link-botao-inverso"
-            onClick={() => setWorkspace(OUTRO_WORKSPACE[workspace])}
-          >
+          <button type="button" className="link-botao-inverso" onClick={trocarWorkspace}>
             <ArrowLeftRight size={12} strokeWidth={2} />
             Trocar
           </button>
@@ -108,12 +118,12 @@ export default function App() {
   );
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-workspace={workspace}>
       <aside className="sidebar">
         <div className="sidebar-top">
           <div className="sidebar-brand">
             <img src="/logo.png" alt="" className="sidebar-logo" />
-            <span className="wordmark">Instituto Odontológico Dr. Pablo Santos</span>
+            <span className="wordmark">{WORDMARK_WORKSPACE[workspace]}</span>
           </div>
           <button
             type="button"

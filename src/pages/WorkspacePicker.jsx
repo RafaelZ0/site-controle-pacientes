@@ -5,25 +5,29 @@ export default function WorkspacePicker() {
   const { setWorkspace } = useWorkspace();
 
   return (
-    <div className="workspace-picker-page">
-      <div className="workspace-picker-cartoes">
-        <button
-          type="button"
-          className="workspace-picker-cartao"
-          onClick={() => setWorkspace("clinica")}
-        >
-          <Building2 size={32} strokeWidth={1.5} />
-          <span>Gestão de Pacientes da Clínica</span>
-        </button>
+    <div className="modal-overlay">
+      <div className="modal-card workspace-picker-modal">
+        <h2>Qual gestão você quer abrir?</h2>
 
-        <button
-          type="button"
-          className="workspace-picker-cartao"
-          onClick={() => setWorkspace("curso")}
-        >
-          <GraduationCap size={32} strokeWidth={1.5} />
-          <span>Gestão de Pacientes do Curso</span>
-        </button>
+        <div className="workspace-picker-opcoes">
+          <button
+            type="button"
+            className="workspace-picker-opcao"
+            onClick={() => setWorkspace("clinica")}
+          >
+            <Building2 size={26} strokeWidth={1.5} />
+            Gestão de Pacientes da Clínica
+          </button>
+
+          <button
+            type="button"
+            className="workspace-picker-opcao"
+            onClick={() => setWorkspace("curso")}
+          >
+            <GraduationCap size={26} strokeWidth={1.5} />
+            Gestão de Pacientes do Curso
+          </button>
+        </div>
       </div>
     </div>
   );
