@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { useWorkspace } from "../lib/WorkspaceContext";
 
 function mensagemErro(error) {
   if (!error) return null;
@@ -11,6 +12,7 @@ function mensagemErro(error) {
 }
 
 export default function Dentistas() {
+  const { workspace } = useWorkspace();
   const [dentistas, setDentistas] = useState([]);
   const [error, setError] = useState(null);
 
@@ -18,14 +20,18 @@ export default function Dentistas() {
   const [dentistaEditando, setDentistaEditando] = useState(null); // dentista | null
 
   async function carregar() {
-    const { data, error } = await supabase.from("dentistas").select("*").order("nome");
+    const { data, error } = await supabase
+      .from("dentistas")
+      .select("*")
+      .eq("workspace", workspace)
+      .order("nome");
     if (error) setError(error.message);
     else setDentistas(data);
   }
 
   useEffect(() => {
     carregar();
-  }, []);
+  }, [workspace]);
 
   return (
     <div className="dentistas-page">
@@ -109,6 +115,7 @@ export default function Dentistas() {
 }
 
 function AdicionarDentistaModal({ onClose, onCriado }) {
+  const { workspace } = useWorkspace();
   const [nome, setNome] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -117,7 +124,9 @@ function AdicionarDentistaModal({ onClose, onCriado }) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const { error } = await supabase.from("dentistas").insert({ nome: nome.trim() });
+    const { error } = await supabase
+      .from("dentistas")
+      .insert({ nome: nome.trim(), workspace });
     setLoading(false);
     if (error) {
       setError(mensagemErro(error));

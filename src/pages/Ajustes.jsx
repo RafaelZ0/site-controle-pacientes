@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Wrench, ChevronUp, ChevronDown } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { iniciais } from "../lib/avatar";
+import { useWorkspace } from "../lib/WorkspaceContext";
 
 const CAMPO_COMPARADORES = {
   nome_completo: (a, b) => comparaTexto(a.pacientes?.nome_completo, b.pacientes?.nome_completo),
@@ -12,6 +13,7 @@ const CAMPO_COMPARADORES = {
 };
 
 export default function Ajustes({ onEditPaciente }) {
+  const { workspace } = useWorkspace();
   const [ajustes, setAjustes] = useState([]);
   const [filtroStatus, setFiltroStatus] = useState("TODOS"); // TODOS | PENDENTES
   const [sort, setSort] = useState({ campo: "data", dir: "asc" });
@@ -24,8 +26,11 @@ export default function Ajustes({ onEditPaciente }) {
 
     const { data, error } = await supabase
       .from("historico_etapas")
-      .select("id, paciente_id, dentista_id, data, concluido, concluido_em, dentistas(nome), pacientes(nome_completo)")
-      .eq("etapa", "AJUSTES");
+      .select(
+        "id, paciente_id, dentista_id, data, concluido, concluido_em, dentistas(nome), pacientes!inner(nome_completo, workspace)"
+      )
+      .eq("etapa", "AJUSTES")
+      .eq("pacientes.workspace", workspace);
 
     if (error) {
       setLoading(false);
@@ -57,7 +62,7 @@ export default function Ajustes({ onEditPaciente }) {
 
   useEffect(() => {
     carregar();
-  }, []);
+  }, [workspace]);
 
   async function toggleConcluido(registro) {
     const concluido = !registro.concluido;
@@ -92,8 +97,8 @@ export default function Ajustes({ onEditPaciente }) {
     <div className="ajustes-page">
       <h2>Ajustes</h2>
       <p className="ajustes-descricao">
-        Fila de pacientes enviados para ajustes (Dr. Matheus). Concluídos continuam
-        aqui, só marcados como feitos.
+        Fila de pacientes enviados para ajustes. Concluídos continuam aqui, só
+        marcados como feitos.
       </p>
 
       <div className="filtros">

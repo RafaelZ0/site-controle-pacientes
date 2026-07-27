@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { Phone, IdCard, Calendar } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { useWorkspace } from "../lib/WorkspaceContext";
 import ExcluirPacienteModal from "./ExcluirPacienteModal";
+import TransferirPacienteModal from "./TransferirPacienteModal";
+
+const NOME_WORKSPACE = { clinica: "Clínica", curso: "Curso" };
+const OUTRO_WORKSPACE = { clinica: "curso", curso: "clinica" };
 
 function mensagemErro(error) {
   if (error?.code === "23505" && error.message?.toLowerCase().includes("cpf")) {
@@ -23,6 +28,7 @@ const initialForm = {
 const CAMPOS_CRITICOS = ["data_inicio", "num_parcelas", "num_consultas"];
 
 export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
+  const { workspace } = useWorkspace();
   const [dentistas, setDentistas] = useState([]);
   const [form, setForm] = useState(initialForm);
   const [initialCriticos, setInitialCriticos] = useState(null);
@@ -32,6 +38,7 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
   const [error, setError] = useState(null);
   const [info, setInfo] = useState(null);
   const [mostrarExcluir, setMostrarExcluir] = useState(false);
+  const [mostrarTransferir, setMostrarTransferir] = useState(false);
 
   const isEdit = Boolean(pacienteId);
 
@@ -40,12 +47,13 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
       .from("dentistas")
       .select("id, nome")
       .eq("ativo", true)
+      .eq("workspace", workspace)
       .order("nome")
       .then(({ data, error }) => {
         if (error) setError(error.message);
         else setDentistas(data);
       });
-  }, []);
+  }, [workspace]);
 
   useEffect(() => {
     setAvisoRecalculo(false);
@@ -138,7 +146,7 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
     } else {
       const { data, error } = await supabase
         .from("pacientes")
-        .insert(payload)
+        .insert({ ...payload, workspace })
         .select()
         .single();
       if (error) {
@@ -352,6 +360,24 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
       )}
 
       {isEdit && (
+        <div className="transferir-paciente">
+          <p>
+            Transferir move o paciente pra Gestão de Pacientes do{" "}
+            {NOME_WORKSPACE[OUTRO_WORKSPACE[workspace]]} — consultas, parcelas
+            e histórico de etapas continuam intactos, só muda o workspace e o
+            dentista responsável.
+          </p>
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={() => setMostrarTransferir(true)}
+          >
+            Transferir para {NOME_WORKSPACE[OUTRO_WORKSPACE[workspace]]}
+          </button>
+        </div>
+      )}
+
+      {isEdit && (
         <div className="zona-perigo">
           <p>
             Excluir o paciente apaga permanentemente o cadastro e tudo que
@@ -376,6 +402,18 @@ export default function PacienteForm({ pacienteId, onSaved, onCancel }) {
         onClose={() => setMostrarExcluir(false)}
         onDeleted={() => {
           setMostrarExcluir(false);
+          onSaved?.();
+        }}
+      />
+    )}
+
+    {mostrarTransferir && (
+      <TransferirPacienteModal
+        pacienteId={pacienteId}
+        pacienteNome={form.nome_completo}
+        onClose={() => setMostrarTransferir(false)}
+        onTransferido={() => {
+          setMostrarTransferir(false);
           onSaved?.();
         }}
       />

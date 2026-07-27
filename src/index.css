@@ -136,6 +136,53 @@ h3 {
   font-size: 0.9rem;
 }
 
+/* Escolha de workspace (Clínica / Curso), pós-login */
+.workspace-picker-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--canvas);
+  padding: 2rem;
+}
+
+.workspace-picker-cartoes {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.workspace-picker-cartao {
+  width: 260px;
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  padding: 2.5rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra-card);
+  color: var(--text-primary);
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+  transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
+}
+
+.workspace-picker-cartao svg {
+  color: var(--navy);
+}
+
+.workspace-picker-cartao:hover:not(:disabled) {
+  border-color: var(--navy);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+  color: var(--text-primary);
+}
+
 /* App shell: sidebar + main content */
 .app-shell {
   display: flex;
@@ -275,6 +322,34 @@ h3 {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+}
+
+.sidebar-footer-workspace {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: var(--text-inverse);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.link-botao-inverso {
+  height: auto;
+  padding: 0;
+  border: none;
+  background: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: rgba(245, 246, 248, 0.6);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.link-botao-inverso:hover:not(:disabled) {
+  border: none;
+  color: var(--text-inverse);
 }
 
 .sidebar-footer-email {
@@ -551,7 +626,8 @@ button:disabled {
   margin-top: 0.25rem;
 }
 
-.regenerar-plano {
+.regenerar-plano,
+.transferir-paciente {
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid var(--border);

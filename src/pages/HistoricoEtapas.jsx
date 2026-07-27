@@ -2,10 +2,12 @@ import { useEffect, useState } from "react";
 import { Check, Calendar } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { ETAPAS } from "../lib/constants";
+import { useWorkspace } from "../lib/WorkspaceContext";
 
 const formInicial = { dentista_id: "", data: "", observacao: "", consulta_id: "" };
 
 export default function HistoricoEtapas({ pacienteId }) {
+  const { workspace } = useWorkspace();
   const [historico, setHistorico] = useState([]);
   const [dentistas, setDentistas] = useState([]);
   const [dentistaPadrao, setDentistaPadrao] = useState("");
@@ -33,6 +35,7 @@ export default function HistoricoEtapas({ pacienteId }) {
       .from("dentistas")
       .select("id, nome")
       .eq("ativo", true)
+      .eq("workspace", workspace)
       .order("nome")
       .then(({ data }) => setDentistas(data ?? []));
 
@@ -51,7 +54,7 @@ export default function HistoricoEtapas({ pacienteId }) {
       .then(({ data }) => setConsultas(data ?? []));
 
     carregar();
-  }, [pacienteId]);
+  }, [pacienteId, workspace]);
 
   const etapaAtual = historico.length
     ? historico.reduce((last, e) =>

@@ -1,20 +1,27 @@
 import { useState } from "react";
-import { Users, UserPlus, Stethoscope, Wrench, Menu } from "lucide-react";
+import { Users, UserPlus, Stethoscope, Wrench, Menu, ArrowLeftRight } from "lucide-react";
 import { useAuth } from "./lib/AuthContext";
+import { useWorkspace } from "./lib/WorkspaceContext";
 import Login from "./pages/Login";
+import WorkspacePicker from "./pages/WorkspacePicker";
 import Busca from "./pages/Busca";
 import PacienteForm from "./pages/PacienteForm";
 import PacienteEditar from "./pages/PacienteEditar";
 import Dentistas from "./pages/Dentistas";
 import Ajustes from "./pages/Ajustes";
 
+const NOME_WORKSPACE = { clinica: "Clínica", curso: "Curso" };
+const OUTRO_WORKSPACE = { clinica: "curso", curso: "clinica" };
+
 export default function App() {
   const { session, loading, signOut } = useAuth();
+  const { workspace, setWorkspace } = useWorkspace();
   const [view, setView] = useState({ name: "busca" });
   const [menuAberto, setMenuAberto] = useState(false);
 
   if (loading) return <p className="carregando">Carregando...</p>;
   if (!session) return <Login />;
+  if (!workspace) return <WorkspacePicker />;
 
   function irParaBusca() {
     setView({ name: "busca" });
@@ -74,11 +81,23 @@ export default function App() {
       </nav>
 
       <div className="sidebar-footer">
+        <div className="sidebar-footer-workspace">
+          <span>{NOME_WORKSPACE[workspace]}</span>
+          <button
+            type="button"
+            className="link-botao-inverso"
+            onClick={() => setWorkspace(OUTRO_WORKSPACE[workspace])}
+          >
+            <ArrowLeftRight size={12} strokeWidth={2} />
+            Trocar
+          </button>
+        </div>
         <span className="sidebar-footer-email">{session.user.email}</span>
         <button
           type="button"
           onClick={() => {
             setMenuAberto(false);
+            setWorkspace(null);
             signOut();
           }}
         >

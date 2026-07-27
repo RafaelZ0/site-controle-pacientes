@@ -3,6 +3,7 @@ import { Search, ChevronUp, ChevronDown, Download } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { ETAPAS } from "../lib/constants";
 import { iniciais } from "../lib/avatar";
+import { useWorkspace } from "../lib/WorkspaceContext";
 import ResumoCards from "./ResumoCards";
 import ExportarCsvModal from "./ExportarCsvModal";
 
@@ -17,6 +18,7 @@ const CAMPO_COMPARADORES = {
 };
 
 export default function Busca({ onEditPaciente }) {
+  const { workspace } = useWorkspace();
   const [dentistas, setDentistas] = useState([]);
   const [dentistaId, setDentistaId] = useState("");
   const [busca, setBusca] = useState("");
@@ -32,9 +34,10 @@ export default function Busca({ onEditPaciente }) {
     supabase
       .from("dentistas")
       .select("id, nome")
+      .eq("workspace", workspace)
       .order("nome")
       .then(({ data }) => setDentistas(data ?? []));
-  }, []);
+  }, [workspace]);
 
   useEffect(() => {
     setLoading(true);
@@ -43,6 +46,7 @@ export default function Busca({ onEditPaciente }) {
     let query = supabase
       .from("pacientes_status")
       .select("*")
+      .eq("workspace", workspace)
       .order("nome_completo");
 
     if (dentistaId) query = query.eq("dentista_id", dentistaId);
@@ -80,7 +84,7 @@ export default function Busca({ onEditPaciente }) {
     }, 250); // debounce da busca
 
     return () => clearTimeout(timeout);
-  }, [dentistaId, busca, etapa, statusFiltro]);
+  }, [workspace, dentistaId, busca, etapa, statusFiltro]);
 
   const pacientesOrdenados = useMemo(() => {
     const comparador = CAMPO_COMPARADORES[sort.campo];

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Users, Clock, Wallet, CalendarDays, Wrench } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { useWorkspace } from "../lib/WorkspaceContext";
 
 export default function ResumoCards({
   dentistaId,
@@ -8,6 +9,7 @@ export default function ResumoCards({
   statusFiltro,
   onToggleFiltro,
 }) {
+  const { workspace } = useWorkspace();
   const [stats, setStats] = useState({
     total: null,
     emAtraso: null,
@@ -25,7 +27,10 @@ export default function ResumoCards({
       const em7ISO = em7dias.toISOString().slice(0, 10);
 
       function base() {
-        let q = supabase.from("pacientes_status").select("id", { count: "exact", head: true });
+        let q = supabase
+          .from("pacientes_status")
+          .select("id", { count: "exact", head: true })
+          .eq("workspace", workspace);
         if (dentistaId) q = q.eq("dentista_id", dentistaId);
         return q;
       }
@@ -47,7 +52,7 @@ export default function ResumoCards({
       });
     }
     carregar();
-  }, [dentistaId]);
+  }, [workspace, dentistaId]);
 
   const cards = [
     { label: "Total de pacientes", valor: stats.total, Icon: Users, acento: "", filtro: null },

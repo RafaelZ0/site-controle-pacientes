@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { ETAPAS } from "../lib/constants";
+import { useWorkspace } from "../lib/WorkspaceContext";
 import { paraCsv, baixarCsv } from "../lib/csv";
 
 const COLUNAS_DISPONIVEIS = [
@@ -34,6 +35,7 @@ const COLUNAS_DISPONIVEIS = [
 const COLUNAS_PADRAO = Object.fromEntries(COLUNAS_DISPONIVEIS.map((c) => [c.key, true]));
 
 export default function ExportarCsvModal({ dentistas, onClose }) {
+  const { workspace } = useWorkspace();
   const [situacao, setSituacao] = useState("");
   const [dentistaId, setDentistaId] = useState("");
   const [etapa, setEtapa] = useState("");
@@ -48,13 +50,14 @@ export default function ExportarCsvModal({ dentistas, onClose }) {
     supabase
       .from("pacientes")
       .select("data_inicio")
+      .eq("workspace", workspace)
       .then(({ data }) => {
         const anosUnicos = Array.from(
           new Set((data ?? []).map((p) => p.data_inicio?.slice(0, 4)).filter(Boolean))
         ).sort((a, b) => b.localeCompare(a));
         setAnos(anosUnicos);
       });
-  }, []);
+  }, [workspace]);
 
   useEffect(() => {
     let cancelado = false;
@@ -65,10 +68,10 @@ export default function ExportarCsvModal({ dentistas, onClose }) {
     return () => {
       cancelado = true;
     };
-  }, [situacao, dentistaId, etapa, ano]);
+  }, [workspace, situacao, dentistaId, etapa, ano]);
 
   function aplicarFiltros(query) {
-    let q = query;
+    let q = query.eq("workspace", workspace);
     if (dentistaId) q = q.eq("dentista_id", dentistaId);
     if (etapa) q = q.eq("etapa_atual", etapa);
     if (situacao === "EM_ATRASO") q = q.eq("tem_consulta_atrasada", true);
