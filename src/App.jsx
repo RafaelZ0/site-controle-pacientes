@@ -162,7 +162,9 @@ export default function App() {
       <main className="app-main">
         {view.name === "busca" && (
           <Busca
-            onEditPaciente={(id) => setView({ name: "editar", id })}
+            onEditPaciente={(pacienteId, tratamentoId) =>
+              setView({ name: "editar", pacienteId, tratamentoId })
+            }
           />
         )}
         {view.name === "novo" && (
@@ -170,7 +172,8 @@ export default function App() {
         )}
         {view.name === "editar" && (
           <PacienteEditar
-            pacienteId={view.id}
+            pacienteId={view.pacienteId}
+            tratamentoId={view.tratamentoId}
             onSaved={irParaBusca}
             onCancel={irParaBusca}
           />
@@ -178,7 +181,11 @@ export default function App() {
         {view.name === "dentistas" && <Dentistas />}
         {view.name === "servicos" && <Servicos />}
         {view.name === "ajustes" && (
-          <Ajustes onEditPaciente={(id) => setView({ name: "editar", id })} />
+          <Ajustes
+            onEditPaciente={(pacienteId, tratamentoId) =>
+              setView({ name: "editar", pacienteId, tratamentoId })
+            }
+          />
         )}
       </main>
     </div>

@@ -8,10 +8,10 @@ import { useWorkspace } from "../lib/WorkspaceContext";
 // ele direto, sem precisar escolher toda vez.
 const DENTISTA_AJUSTES_CLINICA = "Mateus Macedo";
 
-export default function EnviarAjusteAction({ pacienteId }) {
+export default function EnviarAjusteAction({ tratamentoId }) {
   const { workspace } = useWorkspace();
   const [dentistaId, setDentistaId] = useState("");
-  const [registroAberto, setRegistroAberto] = useState(undefined); // undefined = carregando
+  const [registrosAbertos, setRegistrosAbertos] = useState(undefined); // undefined = carregando
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [confirmacao, setConfirmacao] = useState(null);
@@ -25,16 +25,16 @@ export default function EnviarAjusteAction({ pacienteId }) {
     const { data, error } = await supabase
       .from("historico_etapas")
       .select("id, data")
-      .eq("paciente_id", pacienteId)
+      .eq("tratamento_id", tratamentoId)
       .eq("etapa", "AJUSTES")
       .eq("concluido", false)
-      .maybeSingle();
+      .order("data");
     if (error) setError(error.message);
-    else setRegistroAberto(data ?? null);
+    else setRegistrosAbertos(data ?? []);
   }
 
   useEffect(() => {
-    setRegistroAberto(undefined);
+    setRegistrosAbertos(undefined);
 
     if (workspace === "clinica") {
       supabase
@@ -46,21 +46,23 @@ export default function EnviarAjusteAction({ pacienteId }) {
         .then(({ data }) => setDentistaId(data?.id ?? ""));
     } else {
       supabase
-        .from("pacientes")
-        .select("dentista_id, dentista_2_id")
-        .eq("id", pacienteId)
+        .from("tratamentos")
+        .select("pacientes(dentista_id, dentista_2_id)")
+        .eq("id", tratamentoId)
         .single()
-        .then(({ data }) => setDentistaId(data?.dentista_id ?? data?.dentista_2_id ?? ""));
+        .then(({ data }) =>
+          setDentistaId(data?.pacientes?.dentista_id ?? data?.pacientes?.dentista_2_id ?? "")
+        );
     }
 
     carregar();
-  }, [pacienteId, workspace]);
+  }, [tratamentoId, workspace]);
 
   async function enviar() {
     setError(null);
     setLoading(true);
     const { error } = await supabase.from("historico_etapas").insert({
-      paciente_id: pacienteId,
+      tratamento_id: tratamentoId,
       etapa: "AJUSTES",
       dentista_id: dentistaId || null,
       data: todayISO(),
@@ -75,13 +77,10 @@ export default function EnviarAjusteAction({ pacienteId }) {
     carregar();
   }
 
-  async function cancelar() {
+  async function cancelar(registroId) {
     setError(null);
     setLoading(true);
-    const { error } = await supabase
-      .from("historico_etapas")
-      .delete()
-      .eq("id", registroAberto.id);
+    const { error } = await supabase.from("historico_etapas").delete().eq("id", registroId);
     setLoading(false);
     if (error) {
       setError(error.message);
@@ -91,24 +90,28 @@ export default function EnviarAjusteAction({ pacienteId }) {
     carregar();
   }
 
-  if (registroAberto === undefined) return null;
+  if (registrosAbertos === undefined) return null;
 
   return (
     <div className="ajuste-action">
-      {registroAberto ? (
-        <p className="ajuste-action-status">
+      {registrosAbertos.map((registro) => (
+        <p className="ajuste-action-status" key={registro.id}>
           <Wrench size={15} strokeWidth={1.75} />
-          Na fila de ajustes desde {formatDate(registroAberto.data)} —{" "}
-          <button type="button" className="link-botao" onClick={cancelar} disabled={loading}>
+          Na fila de ajustes desde {formatDate(registro.data)} —{" "}
+          <button
+            type="button"
+            className="link-botao"
+            onClick={() => cancelar(registro.id)}
+            disabled={loading}
+          >
             cancelar envio
           </button>
         </p>
-      ) : (
-        <button type="button" className="btn-outline" onClick={enviar} disabled={loading}>
-          <Wrench size={15} strokeWidth={1.75} />
-          Enviar para ajustes
-        </button>
-      )}
+      ))}
+      <button type="button" className="btn-outline" onClick={enviar} disabled={loading}>
+        <Wrench size={15} strokeWidth={1.75} />
+        Enviar para ajustes
+      </button>
       {confirmacao && (
         <p className="ajuste-action-confirmacao">
           <Check size={14} strokeWidth={2.5} />

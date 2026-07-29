@@ -30,7 +30,7 @@ export default function ResumoCards({
 
       function base() {
         let q = supabase
-          .from("pacientes_status")
+          .from("tratamentos_status")
           .select("id", { count: "exact", head: true })
           .eq("workspace", workspace);
         if (dentistaId) {

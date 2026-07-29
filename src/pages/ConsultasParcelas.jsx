@@ -11,13 +11,15 @@ const STATUS_LABEL = {
 const LIMITE_PADRAO = 4;
 const PRIORIDADE_CONSULTA = { "EM ATRASO": 0, "EM DIA": 1, REALIZADA: 2 };
 
-export default function ConsultasParcelas({ pacienteId }) {
-  const [aba, setAba] = useState("consultas");
+export default function ConsultasParcelas({ tratamentoId }) {
   const [consultas, setConsultas] = useState([]);
-  const [parcelas, setParcelas] = useState([]);
+  const [numConsultas, setNumConsultas] = useState(0);
+  const [novoNumConsultas, setNovoNumConsultas] = useState("");
+  const [salvandoNumConsultas, setSalvandoNumConsultas] = useState(false);
+  const [regenerando, setRegenerando] = useState(false);
   const [error, setError] = useState(null);
+  const [info, setInfo] = useState(null);
   const [verTodasConsultas, setVerTodasConsultas] = useState(false);
-  const [verTodasParcelas, setVerTodasParcelas] = useState(false);
 
   const [dentistaPadrao, setDentistaPadrao] = useState("");
 
@@ -30,33 +32,85 @@ export default function ConsultasParcelas({ pacienteId }) {
   const [etapasDaConsulta, setEtapasDaConsulta] = useState([]);
 
   async function carregar() {
-    const [c, p] = await Promise.all([
+    const [c, t] = await Promise.all([
       supabase
         .from("consultas_status")
         .select("*")
-        .eq("paciente_id", pacienteId)
+        .eq("tratamento_id", tratamentoId)
         .order("numero"),
       supabase
-        .from("parcelas")
-        .select("*")
-        .eq("paciente_id", pacienteId)
-        .order("numero"),
+        .from("tratamentos")
+        .select("num_consultas")
+        .eq("id", tratamentoId)
+        .single(),
     ]);
     if (c.error) setError(c.error.message);
     else setConsultas(c.data);
-    if (p.error) setError(p.error.message);
-    else setParcelas(p.data);
+    if (t.error) setError(t.error.message);
+    else {
+      setNumConsultas(t.data.num_consultas);
+      setNovoNumConsultas(String(t.data.num_consultas));
+    }
   }
 
   useEffect(() => {
     carregar();
     supabase
-      .from("pacientes")
-      .select("dentista_id")
-      .eq("id", pacienteId)
+      .from("tratamentos")
+      .select("pacientes(dentista_id, dentista_2_id)")
+      .eq("id", tratamentoId)
       .single()
-      .then(({ data }) => setDentistaPadrao(data?.dentista_id ?? ""));
-  }, [pacienteId]);
+      .then(({ data }) =>
+        setDentistaPadrao(data?.pacientes?.dentista_id ?? data?.pacientes?.dentista_2_id ?? "")
+      );
+  }, [tratamentoId]);
+
+  async function salvarNumConsultas(e) {
+    e.preventDefault();
+    setError(null);
+    setInfo(null);
+
+    const novo = Number(novoNumConsultas);
+    if (novo < numConsultas) {
+      setError("O nº de consultas não pode diminuir — só aumentar.");
+      return;
+    }
+
+    setSalvandoNumConsultas(true);
+    const { error } = await supabase
+      .from("tratamentos")
+      .update({ num_consultas: novo })
+      .eq("id", tratamentoId);
+    setSalvandoNumConsultas(false);
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    carregar();
+  }
+
+  async function handleRegenerarConsultas() {
+    const consultasFeitas = consultas.filter((c) => c.realizada).length;
+    const confirmado = window.confirm(
+      `Isso vai apagar TODAS as consultas deste tratamento e recriar do zero — inclusive ${consultasFeitas} já realizada(s), que serão perdidas. Essa ação não pode ser desfeita. Continuar?`
+    );
+    if (!confirmado) return;
+
+    setError(null);
+    setInfo(null);
+    setRegenerando(true);
+    const { error } = await supabase.rpc("gerar_consultas_tratamento", {
+      p_tratamento_id: tratamentoId,
+    });
+    setRegenerando(false);
+    if (error) {
+      setError(error.message);
+      return;
+    }
+    setInfo("Consultas regeneradas do zero a partir do nº atual.");
+    carregar();
+  }
 
   async function abrirMarcarRealizada(consulta) {
     setError(null);
@@ -66,7 +120,7 @@ export default function ConsultasParcelas({ pacienteId }) {
     const { data } = await supabase
       .from("historico_etapas")
       .select("etapa")
-      .eq("paciente_id", pacienteId);
+      .eq("tratamento_id", tratamentoId);
     setEtapasJaFeitas(new Set((data ?? []).map((e) => e.etapa)));
   }
 
@@ -100,7 +154,7 @@ export default function ConsultasParcelas({ pacienteId }) {
 
     if (formRealizar.etapas.length > 0) {
       const registros = formRealizar.etapas.map((etapa) => ({
-        paciente_id: pacienteId,
+        tratamento_id: tratamentoId,
         etapa,
         dentista_id: dentistaPadrao,
         data: formRealizar.data,
@@ -152,21 +206,6 @@ export default function ConsultasParcelas({ pacienteId }) {
     setEtapasDaConsulta([]);
   }
 
-  async function toggleParcela(parcela) {
-    const paga = !parcela.paga;
-    const { error } = await supabase
-      .from("parcelas")
-      .update({
-        paga,
-        data_pagamento: paga ? todayISO() : null,
-      })
-      .eq("id", parcela.id);
-    if (error) setError(error.message);
-    else carregar();
-  }
-
-  const hoje = todayISO();
-
   const consultasOrdenadas = [...consultas].sort(
     (a, b) =>
       (PRIORIDADE_CONSULTA[a.status] ?? 1) - (PRIORIDADE_CONSULTA[b.status] ?? 1) ||
@@ -176,130 +215,108 @@ export default function ConsultasParcelas({ pacienteId }) {
     ? consultasOrdenadas
     : consultasOrdenadas.slice(0, LIMITE_PADRAO);
 
-  // Ordenado só por número (não por status) pra não reordenar a lista toda
-  // debaixo do usuário assim que ele marca uma parcela como paga — a cor da
-  // linha já indica vencida/paga/pendente.
-  const parcelasOrdenadas = [...parcelas].sort((a, b) => a.numero - b.numero);
-  const parcelasVisiveis = verTodasParcelas
-    ? parcelasOrdenadas
-    : parcelasOrdenadas.slice(0, LIMITE_PADRAO);
-
   return (
     <div className="consultas-parcelas">
-      <div className="tabs">
-        <button
-          type="button"
-          className={aba === "consultas" ? "ativo" : ""}
-          onClick={() => setAba("consultas")}
-        >
-          Consultas
-        </button>
-        <button
-          type="button"
-          className={aba === "parcelas" ? "ativo" : ""}
-          onClick={() => setAba("parcelas")}
-        >
-          Parcelas
-        </button>
-      </div>
+      <h3>Consultas</h3>
 
       {error && <p className="error">{error}</p>}
+      {info && <p className="info">{info}</p>}
 
-      {aba === "consultas" && (
-        <>
-          <table className="cp-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Data prevista</th>
-                <th>Status</th>
-                <th>Realizada</th>
-              </tr>
-            </thead>
-            <tbody>
-              {consultasVisiveis.map((c) => (
-                <tr key={c.id} className="cp-row-clicavel" onClick={() => abrirDetalhe(c)}>
-                  <td>{c.numero}</td>
-                  <td>{formatDate(c.data_prevista)}</td>
-                  <td>
-                    <span className={`badge badge-consulta-${c.status.toLowerCase().replace(" ", "-")}`}>
-                      {STATUS_LABEL[c.status] ?? c.status}
-                    </span>
-                  </td>
-                  <td onClick={(e) => e.stopPropagation()}>
-                    <label className="check-touch">
-                      <input
-                        type="checkbox"
-                        checked={c.realizada}
-                        onChange={() =>
-                          c.realizada ? desmarcarRealizada(c) : abrirMarcarRealizada(c)
-                        }
-                      />
-                    </label>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {consultas.length > LIMITE_PADRAO && (
-            <button
-              type="button"
-              className="btn-outline ver-todas"
-              onClick={() => setVerTodasConsultas((v) => !v)}
-            >
-              {verTodasConsultas ? "Mostrar menos" : `Ver todas as ${consultas.length}`}
-            </button>
+      <form className="num-consultas-form" onSubmit={salvarNumConsultas}>
+        <label>
+          Nº de consultas
+          <input
+            type="number"
+            min={numConsultas}
+            value={novoNumConsultas}
+            onChange={(e) => setNovoNumConsultas(e.target.value)}
+          />
+          <span className="label-ajuda">
+            Só pode aumentar — a consulta nova é calculada a partir da última
+            (data real se já realizada, +6 meses se for logo após o
+            implante).
+          </span>
+        </label>
+        <button type="submit" disabled={salvandoNumConsultas || Number(novoNumConsultas) === numConsultas}>
+          {salvandoNumConsultas ? "Salvando..." : "Salvar"}
+        </button>
+      </form>
+
+      <table className="cp-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Data prevista</th>
+            <th>Status</th>
+            <th>Realizada</th>
+          </tr>
+        </thead>
+        <tbody>
+          {consultasVisiveis.map((c) => (
+            <tr key={c.id} className="cp-row-clicavel" onClick={() => abrirDetalhe(c)}>
+              <td>{c.numero}</td>
+              <td>{formatDate(c.data_prevista)}</td>
+              <td>
+                <span className={`badge badge-consulta-${c.status.toLowerCase().replace(" ", "-")}`}>
+                  {STATUS_LABEL[c.status] ?? c.status}
+                </span>
+                {c.gap_implante && (
+                  <span className="badge badge-inline badge-neutro" title="Consulta 6 meses após o implante">
+                    +6 meses
+                  </span>
+                )}
+              </td>
+              <td onClick={(e) => e.stopPropagation()}>
+                <label className="check-touch">
+                  <input
+                    type="checkbox"
+                    checked={c.realizada}
+                    onChange={() =>
+                      c.realizada ? desmarcarRealizada(c) : abrirMarcarRealizada(c)
+                    }
+                  />
+                </label>
+              </td>
+            </tr>
+          ))}
+          {consultas.length === 0 && (
+            <tr>
+              <td colSpan={4} className="estado-vazio">
+                <div className="estado-vazio-conteudo">
+                  <span>Nenhuma consulta ainda — defina o nº de consultas acima.</span>
+                </div>
+              </td>
+            </tr>
           )}
-        </>
+        </tbody>
+      </table>
+      {consultas.length > LIMITE_PADRAO && (
+        <button
+          type="button"
+          className="btn-outline ver-todas"
+          onClick={() => setVerTodasConsultas((v) => !v)}
+        >
+          {verTodasConsultas ? "Mostrar menos" : `Ver todas as ${consultas.length}`}
+        </button>
       )}
 
-      {aba === "parcelas" && (
-        <>
-          <table className="cp-table">
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Vencimento</th>
-                <th>Paga</th>
-              </tr>
-            </thead>
-            <tbody>
-              {parcelasVisiveis.map((p) => (
-                <tr
-                  key={p.id}
-                  className={
-                    p.paga
-                      ? "cp-row-paga"
-                      : p.data_vencimento < hoje
-                      ? "cp-row-atrasada"
-                      : ""
-                  }
-                >
-                  <td>{p.numero}</td>
-                  <td>{formatDate(p.data_vencimento)}</td>
-                  <td>
-                    <label className="check-touch">
-                      <input
-                        type="checkbox"
-                        checked={p.paga}
-                        onChange={() => toggleParcela(p)}
-                      />
-                    </label>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {parcelas.length > LIMITE_PADRAO && (
-            <button
-              type="button"
-              className="btn-outline ver-todas"
-              onClick={() => setVerTodasParcelas((v) => !v)}
-            >
-              {verTodasParcelas ? "Mostrar menos" : `Ver todas as ${parcelas.length}`}
-            </button>
-          )}
-        </>
+      {consultas.length > 0 && (
+        <div className="regenerar-plano">
+          <p>
+            Aumentar o nº de consultas acima já recalcula sozinho, sem mexer
+            no que já foi realizado. Se em vez disso você quiser{" "}
+            <strong>apagar e recriar as consultas do zero</strong> (perde
+            marcações de realizada), use o botão abaixo.
+          </p>
+          <button
+            type="button"
+            className="btn-danger-outline"
+            onClick={handleRegenerarConsultas}
+            disabled={regenerando}
+          >
+            {regenerando ? "Regenerando..." : "Apagar e recriar consultas do zero"}
+          </button>
+        </div>
       )}
 
       {modalRealizar && (

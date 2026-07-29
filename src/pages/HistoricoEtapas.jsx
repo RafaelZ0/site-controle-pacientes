@@ -6,7 +6,7 @@ import { useWorkspace } from "../lib/WorkspaceContext";
 
 const formInicial = { dentista_id: "", data: "", observacao: "", consulta_id: "" };
 
-export default function HistoricoEtapas({ pacienteId }) {
+export default function HistoricoEtapas({ tratamentoId }) {
   const { workspace } = useWorkspace();
   const [historico, setHistorico] = useState([]);
   const [dentistas, setDentistas] = useState([]);
@@ -24,7 +24,7 @@ export default function HistoricoEtapas({ pacienteId }) {
     const { data, error } = await supabase
       .from("historico_etapas")
       .select("*, dentistas(nome)")
-      .eq("paciente_id", pacienteId)
+      .eq("tratamento_id", tratamentoId)
       .order("created_at");
     if (error) setError(error.message);
     else setHistorico(data);
@@ -40,21 +40,23 @@ export default function HistoricoEtapas({ pacienteId }) {
       .then(({ data }) => setDentistas(data ?? []));
 
     supabase
-      .from("pacientes")
-      .select("dentista_id, dentista_2_id")
-      .eq("id", pacienteId)
+      .from("tratamentos")
+      .select("pacientes(dentista_id, dentista_2_id)")
+      .eq("id", tratamentoId)
       .single()
-      .then(({ data }) => setDentistaPadrao(data?.dentista_id ?? data?.dentista_2_id ?? ""));
+      .then(({ data }) =>
+        setDentistaPadrao(data?.pacientes?.dentista_id ?? data?.pacientes?.dentista_2_id ?? "")
+      );
 
     supabase
       .from("consultas")
       .select("id, numero, data_prevista")
-      .eq("paciente_id", pacienteId)
+      .eq("tratamento_id", tratamentoId)
       .order("numero")
       .then(({ data }) => setConsultas(data ?? []));
 
     carregar();
-  }, [pacienteId, workspace]);
+  }, [tratamentoId, workspace]);
 
   const etapaAtual = historico.length
     ? historico.reduce((last, e) =>
@@ -102,7 +104,7 @@ export default function HistoricoEtapas({ pacienteId }) {
     setSalvando(true);
 
     const payload = {
-      paciente_id: pacienteId,
+      tratamento_id: tratamentoId,
       etapa: modalEtapa,
       dentista_id: form.dentista_id,
       data: form.data,

@@ -635,6 +635,57 @@ button:disabled {
   margin-bottom: 0;
 }
 
+/* Seletor de tratamentos (paciente pode ter mais de um simultâneo) */
+.tratamentos-seletor {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tratamento-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: auto;
+  min-height: 40px;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.tratamento-chip:hover:not(:disabled) {
+  border-color: var(--navy);
+  color: var(--text-secondary);
+}
+
+.tratamento-chip.ativo {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: white;
+}
+
+.tratamento-chip-adicionar {
+  border-style: dashed;
+}
+
+/* Nº de consultas (aba Consultas) */
+.num-consultas-form {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  max-width: 420px;
+}
+
+.num-consultas-form label {
+  flex: 1;
+}
+
 /* Paciente form */
 .paciente-form {
   background: var(--surface);

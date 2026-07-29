@@ -23,7 +23,10 @@ const UM_DIA_MS = 24 * 60 * 60 * 1000;
 const DENTISTA_AJUSTES_CLINICA = "Mateus Macedo";
 
 const CAMPO_COMPARADORES = {
-  nome_completo: (a, b) => comparaTexto(a.pacientes?.nome_completo, b.pacientes?.nome_completo),
+  nome_completo: (a, b) =>
+    comparaTexto(a.tratamentos?.pacientes?.nome_completo, b.tratamentos?.pacientes?.nome_completo),
+  servico_nome: (a, b) =>
+    comparaTexto(a.tratamentos?.servicos?.nome, b.tratamentos?.servicos?.nome),
   dentista_nome: (a, b) => comparaTexto(a.dentistas?.nome, b.dentistas?.nome),
   dentista_2_nome: (a, b) => comparaTexto(a.dentista2Nome, b.dentista2Nome),
   etapa_atual: (a, b) => comparaTexto(a.etapaAtual, b.etapaAtual),
@@ -62,10 +65,10 @@ export default function Ajustes({ onEditPaciente }) {
     const { data, error } = await supabase
       .from("historico_etapas")
       .select(
-        "id, paciente_id, dentista_id, data, observacao, concluido, concluido_em, dentistas(nome), pacientes!inner(nome_completo, workspace)"
+        "id, tratamento_id, dentista_id, data, observacao, concluido, concluido_em, dentistas(nome), tratamentos!inner(paciente_id, servicos(nome), pacientes!inner(nome_completo, workspace))"
       )
       .eq("etapa", "AJUSTES")
-      .eq("pacientes.workspace", workspace);
+      .eq("tratamentos.pacientes.workspace", workspace);
 
     if (error) {
       setLoading(false);
@@ -73,11 +76,11 @@ export default function Ajustes({ onEditPaciente }) {
       return;
     }
 
-    const pacienteIds = Array.from(new Set((data ?? []).map((a) => a.paciente_id)));
+    const tratamentoIds = Array.from(new Set((data ?? []).map((a) => a.tratamento_id)));
     const { data: statusData, error: statusError } = await supabase
-      .from("pacientes_status")
+      .from("tratamentos_status")
       .select("id, etapa_atual, dentista_2_nome")
-      .in("id", pacienteIds.length ? pacienteIds : ["00000000-0000-0000-0000-000000000000"]);
+      .in("id", tratamentoIds.length ? tratamentoIds : ["00000000-0000-0000-0000-000000000000"]);
 
     setLoading(false);
 
@@ -86,18 +89,18 @@ export default function Ajustes({ onEditPaciente }) {
       return;
     }
 
-    const etapaAtualPorPaciente = Object.fromEntries(
-      (statusData ?? []).map((p) => [p.id, p.etapa_atual])
+    const etapaAtualPorTratamento = Object.fromEntries(
+      (statusData ?? []).map((t) => [t.id, t.etapa_atual])
     );
-    const dentista2NomePorPaciente = Object.fromEntries(
-      (statusData ?? []).map((p) => [p.id, p.dentista_2_nome])
+    const dentista2NomePorTratamento = Object.fromEntries(
+      (statusData ?? []).map((t) => [t.id, t.dentista_2_nome])
     );
 
     setAjustes(
       (data ?? []).map((a) => ({
         ...a,
-        etapaAtual: etapaAtualPorPaciente[a.paciente_id] ?? null,
-        dentista2Nome: dentista2NomePorPaciente[a.paciente_id] ?? null,
+        etapaAtual: etapaAtualPorTratamento[a.tratamento_id] ?? null,
+        dentista2Nome: dentista2NomePorTratamento[a.tratamento_id] ?? null,
       }))
     );
   }
@@ -135,7 +138,11 @@ export default function Ajustes({ onEditPaciente }) {
       if (filtroStatus === "PENDENTES" && a.concluido) return false;
       if (filtroStatus === "CONCLUIDOS" && !a.concluido) return false;
       if (mes && a.data?.slice(0, 7) !== mes) return false;
-      if (termo && !a.pacientes?.nome_completo?.toLowerCase().includes(termo)) return false;
+      if (
+        termo &&
+        !a.tratamentos?.pacientes?.nome_completo?.toLowerCase().includes(termo)
+      )
+        return false;
       return true;
     });
   }, [ajustes, filtroStatus, busca, mes]);
@@ -248,6 +255,9 @@ export default function Ajustes({ onEditPaciente }) {
               <ThOrdenavel campo="nome_completo" sort={sort} onClick={ordenarPor}>
                 Nome
               </ThOrdenavel>
+              <ThOrdenavel campo="servico_nome" sort={sort} onClick={ordenarPor}>
+                Serviço
+              </ThOrdenavel>
               <ThOrdenavel campo="dentista_nome" sort={sort} onClick={ordenarPor}>
                 {workspace === "curso" ? "Dentista 1" : "Dentista principal"}
               </ThOrdenavel>
@@ -275,10 +285,11 @@ export default function Ajustes({ onEditPaciente }) {
               <tr key={a.id}>
                 <td>
                   <div className="paciente-nome-cell">
-                    <span className="avatar">{iniciais(a.pacientes?.nome_completo)}</span>
-                    {a.pacientes?.nome_completo ?? "—"}
+                    <span className="avatar">{iniciais(a.tratamentos?.pacientes?.nome_completo)}</span>
+                    {a.tratamentos?.pacientes?.nome_completo ?? "—"}
                   </div>
                 </td>
+                <td>{a.tratamentos?.servicos?.nome ?? "Não definido"}</td>
                 <td>{a.dentistas?.nome ?? "—"}</td>
                 {workspace === "curso" && <td>{a.dentista2Nome ?? "—"}</td>}
                 <td>
@@ -325,7 +336,12 @@ export default function Ajustes({ onEditPaciente }) {
                   </button>
                 </td>
                 <td>
-                  <button type="button" onClick={() => onEditPaciente(a.paciente_id)}>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onEditPaciente(a.tratamentos?.paciente_id, a.tratamento_id)
+                    }
+                  >
                     Ver paciente
                   </button>
                 </td>
@@ -333,7 +349,7 @@ export default function Ajustes({ onEditPaciente }) {
             ))}
             {!loading && ajustesOrdenados.length === 0 && (
               <tr>
-                <td colSpan={workspace === "curso" ? 9 : 8} className="estado-vazio">
+                <td colSpan={workspace === "curso" ? 10 : 9} className="estado-vazio">
                   <div className="estado-vazio-conteudo">
                     <Wrench size={28} strokeWidth={1.5} />
                     <span>
@@ -425,7 +441,7 @@ function DetalheAjusteModal({ registro, dentistas, forcarConcluido, onClose, onS
       <form className="modal-card" onClick={(e) => e.stopPropagation()} onSubmit={salvar}>
         <h2>
           {forcarConcluido ? "Concluir ajuste" : "Detalhes do ajuste"} —{" "}
-          {registro.pacientes?.nome_completo}
+          {registro.tratamentos?.pacientes?.nome_completo}
         </h2>
 
         <label>

@@ -9,6 +9,7 @@ import ExportarCsvModal from "./ExportarCsvModal";
 
 const CAMPO_COMPARADORES = {
   nome_completo: (a, b) => comparaTexto(a.nome_completo, b.nome_completo),
+  servico_nome: (a, b) => comparaTexto(a.servico_nome, b.servico_nome),
   dentista_nome: (a, b) => comparaTexto(a.dentista_nome, b.dentista_nome),
   dentista_2_nome: (a, b) => comparaTexto(a.dentista_2_nome, b.dentista_2_nome),
   etapa_atual: (a, b) => ETAPAS.indexOf(a.etapa_atual) - ETAPAS.indexOf(b.etapa_atual),
@@ -45,7 +46,7 @@ export default function Busca({ onEditPaciente }) {
     setError(null);
 
     let query = supabase
-      .from("pacientes_status")
+      .from("tratamentos_status")
       .select("*")
       .eq("workspace", workspace)
       .order("nome_completo");
@@ -173,6 +174,9 @@ export default function Busca({ onEditPaciente }) {
               <ThOrdenavel campo="nome_completo" sort={sort} onClick={ordenarPor}>
                 Nome
               </ThOrdenavel>
+              <ThOrdenavel campo="servico_nome" sort={sort} onClick={ordenarPor}>
+                Serviço
+              </ThOrdenavel>
               <ThOrdenavel campo="dentista_nome" sort={sort} onClick={ordenarPor}>
                 {workspace === "curso" ? "Dentista 1" : "Dentista"}
               </ThOrdenavel>
@@ -208,6 +212,7 @@ export default function Busca({ onEditPaciente }) {
                     {p.nome_completo}
                   </div>
                 </td>
+                <td>{p.servico_nome ?? "Não definido"}</td>
                 <td>{p.dentista_nome ?? "Sem dentista definido"}</td>
                 {workspace === "curso" && (
                   <td>{p.dentista_2_nome ?? "Sem dentista definido"}</td>
@@ -231,7 +236,7 @@ export default function Busca({ onEditPaciente }) {
                   </span>
                 </td>
                 <td>
-                  <button type="button" onClick={() => onEditPaciente(p.id)}>
+                  <button type="button" onClick={() => onEditPaciente(p.paciente_id, p.id)}>
                     Editar
                   </button>
                 </td>
@@ -239,7 +244,7 @@ export default function Busca({ onEditPaciente }) {
             ))}
             {!loading && pacientes.length === 0 && (
               <tr>
-                <td colSpan={workspace === "curso" ? 9 : 8} className="estado-vazio">
+                <td colSpan={workspace === "curso" ? 10 : 9} className="estado-vazio">
                   <div className="estado-vazio-conteudo">
                     <Search size={28} strokeWidth={1.5} />
                     <span>Nenhum paciente encontrado.</span>

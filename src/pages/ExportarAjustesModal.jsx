@@ -34,7 +34,16 @@ export default function ExportarAjustesModal({ ajustes, dentistas, workspace, on
 
   const colunasDisponiveis = useMemo(
     () => [
-      { key: "nome_completo", label: "Nome", valor: (a) => a.pacientes?.nome_completo },
+      {
+        key: "nome_completo",
+        label: "Nome",
+        valor: (a) => a.tratamentos?.pacientes?.nome_completo,
+      },
+      {
+        key: "servico_nome",
+        label: "Serviço",
+        valor: (a) => a.tratamentos?.servicos?.nome,
+      },
       {
         key: "dentista_nome",
         label: workspace === "curso" ? "Dentista 1" : "Dentista",

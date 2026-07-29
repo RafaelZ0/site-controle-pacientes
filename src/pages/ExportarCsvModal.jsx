@@ -8,6 +8,7 @@ const COLUNAS_DISPONIVEIS = [
   { key: "nome_completo", label: "Nome", valor: (p) => p.nome_completo },
   { key: "telefone", label: "Telefone", valor: (p) => p.telefone },
   { key: "cpf", label: "CPF", valor: (p) => p.cpf },
+  { key: "servico_nome", label: "Serviço", valor: (p) => p.servico_nome },
   { key: "dentista_nome", label: "Dentista", valor: (p) => p.dentista_nome },
   { key: "dentista_2_nome", label: "Dentista 2", valor: (p) => p.dentista_2_nome },
   { key: "etapa_atual", label: "Etapa", valor: (p) => p.etapa_atual },
@@ -52,7 +53,7 @@ export default function ExportarCsvModal({ dentistas, onClose }) {
 
   useEffect(() => {
     supabase
-      .from("pacientes")
+      .from("tratamentos_status")
       .select("data_inicio")
       .eq("workspace", workspace)
       .then(({ data }) => {
@@ -65,7 +66,7 @@ export default function ExportarCsvModal({ dentistas, onClose }) {
 
   useEffect(() => {
     let cancelado = false;
-    aplicarFiltros(supabase.from("pacientes_status").select("id", { count: "exact", head: true }))
+    aplicarFiltros(supabase.from("tratamentos_status").select("id", { count: "exact", head: true }))
       .then(({ count, error }) => {
         if (cancelado) return;
         if (error) {
@@ -108,7 +109,7 @@ export default function ExportarCsvModal({ dentistas, onClose }) {
     setExportando(true);
 
     const { data, error } = await aplicarFiltros(
-      supabase.from("pacientes_status").select("*")
+      supabase.from("tratamentos_status").select("*")
     ).order("nome_completo");
 
     setExportando(false);
