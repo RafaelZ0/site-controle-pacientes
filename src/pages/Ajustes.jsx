@@ -18,6 +18,10 @@ function formatarMes(chave) {
 
 const UM_DIA_MS = 24 * 60 * 60 * 1000;
 
+// Na Clínica, quem sempre faz os ajustes é o Dr. Mateus Macedo — usado como
+// valor padrão do select, mas continua editável se um dia for outra pessoa.
+const DENTISTA_AJUSTES_CLINICA = "Mateus Macedo";
+
 const CAMPO_COMPARADORES = {
   nome_completo: (a, b) => comparaTexto(a.pacientes?.nome_completo, b.pacientes?.nome_completo),
   dentista_nome: (a, b) => comparaTexto(a.dentistas?.nome, b.dentistas?.nome),
@@ -357,7 +361,12 @@ export default function Ajustes({ onEditPaciente }) {
 }
 
 function DetalheAjusteModal({ registro, dentistas, onClose, onSalvo }) {
-  const [dentistaId, setDentistaId] = useState(registro.dentista_id ?? "");
+  const { workspace } = useWorkspace();
+  const dentistaPadrao =
+    workspace === "clinica"
+      ? dentistas.find((d) => d.nome === DENTISTA_AJUSTES_CLINICA)?.id ?? ""
+      : "";
+  const [dentistaId, setDentistaId] = useState(registro.dentista_id ?? dentistaPadrao);
   const [observacao, setObservacao] = useState(registro.observacao ?? "");
   const [concluido, setConcluido] = useState(registro.concluido);
   const [salvando, setSalvando] = useState(false);

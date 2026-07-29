@@ -1,8 +1,15 @@
 import { useEffect, useState } from "react";
 import { Wrench, Check } from "lucide-react";
 import { supabase } from "../supabaseClient";
+import { useWorkspace } from "../lib/WorkspaceContext";
+
+// Na Clínica, quem sempre faz os ajustes é o Dr. Mateus Macedo, independente
+// de qual dentista o paciente tem como responsável — então o envio já usa
+// ele direto, sem precisar escolher toda vez.
+const DENTISTA_AJUSTES_CLINICA = "Mateus Macedo";
 
 export default function EnviarAjusteAction({ pacienteId }) {
+  const { workspace } = useWorkspace();
   const [dentistaId, setDentistaId] = useState("");
   const [registroAberto, setRegistroAberto] = useState(undefined); // undefined = carregando
   const [loading, setLoading] = useState(false);
@@ -28,14 +35,26 @@ export default function EnviarAjusteAction({ pacienteId }) {
 
   useEffect(() => {
     setRegistroAberto(undefined);
-    supabase
-      .from("pacientes")
-      .select("dentista_id, dentista_2_id")
-      .eq("id", pacienteId)
-      .single()
-      .then(({ data }) => setDentistaId(data?.dentista_id ?? data?.dentista_2_id ?? ""));
+
+    if (workspace === "clinica") {
+      supabase
+        .from("dentistas")
+        .select("id")
+        .eq("workspace", "clinica")
+        .eq("nome", DENTISTA_AJUSTES_CLINICA)
+        .maybeSingle()
+        .then(({ data }) => setDentistaId(data?.id ?? ""));
+    } else {
+      supabase
+        .from("pacientes")
+        .select("dentista_id, dentista_2_id")
+        .eq("id", pacienteId)
+        .single()
+        .then(({ data }) => setDentistaId(data?.dentista_id ?? data?.dentista_2_id ?? ""));
+    }
+
     carregar();
-  }, [pacienteId]);
+  }, [pacienteId, workspace]);
 
   async function enviar() {
     setError(null);
