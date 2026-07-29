@@ -4,7 +4,7 @@ import { supabase } from "../supabaseClient";
 import { iniciais } from "../lib/avatar";
 import { etapaBadgeClasse } from "../lib/constants";
 import { useWorkspace } from "../lib/WorkspaceContext";
-import { paraCsv, baixarCsv } from "../lib/csv";
+import ExportarAjustesModal from "./ExportarAjustesModal";
 
 const NOMES_MES = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -35,7 +35,8 @@ export default function Ajustes({ onEditPaciente }) {
   const { workspace } = useWorkspace();
   const [ajustes, setAjustes] = useState([]);
   const [dentistas, setDentistas] = useState([]);
-  const [filtroStatus, setFiltroStatus] = useState("TODOS"); // TODOS | PENDENTES
+  const [filtroStatus, setFiltroStatus] = useState("PENDENTES"); // TODOS | PENDENTES | CONCLUIDOS
+  const [mostrarExportar, setMostrarExportar] = useState(false);
   const [busca, setBusca] = useState("");
   const [mes, setMes] = useState("");
   const [sort, setSort] = useState({ campo: "data", dir: "asc" });
@@ -129,6 +130,7 @@ export default function Ajustes({ onEditPaciente }) {
     const termo = busca.trim().toLowerCase();
     return ajustes.filter((a) => {
       if (filtroStatus === "PENDENTES" && a.concluido) return false;
+      if (filtroStatus === "CONCLUIDOS" && !a.concluido) return false;
       if (mes && a.data?.slice(0, 7) !== mes) return false;
       if (termo && !a.pacientes?.nome_completo?.toLowerCase().includes(termo)) return false;
       return true;
@@ -158,22 +160,6 @@ export default function Ajustes({ onEditPaciente }) {
       concluidosUltimos30Dias,
     };
   }, [ajustes]);
-
-  function exportarCsv() {
-    const colunas = [
-      { label: "Nome", valor: (a) => a.pacientes?.nome_completo },
-      { label: workspace === "curso" ? "Dentista 1" : "Dentista", valor: (a) => a.dentistas?.nome },
-      ...(workspace === "curso"
-        ? [{ label: "Dentista 2", valor: (a) => a.dentista2Nome }]
-        : []),
-      { label: "Etapa atual", valor: (a) => a.etapaAtual },
-      { label: "Enviado em", valor: (a) => formatDate(a.data) },
-      { label: "Status", valor: (a) => (a.concluido ? "Concluído" : "Pendente") },
-      { label: "Observação", valor: (a) => a.observacao },
-    ];
-    const csv = paraCsv(ajustesOrdenados, colunas);
-    baixarCsv(`ajustes_${todayISO()}.csv`, csv);
-  }
 
   return (
     <div className="ajustes-page">
@@ -218,8 +204,9 @@ export default function Ajustes({ onEditPaciente }) {
 
       <div className="filtros">
         <select value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)}>
+          <option value="PENDENTES">Enviados</option>
+          <option value="CONCLUIDOS">Concluídos</option>
           <option value="TODOS">Enviados e concluídos</option>
-          <option value="PENDENTES">Somente enviados</option>
         </select>
 
         <select value={mes} onChange={(e) => setMes(e.target.value)}>
@@ -238,7 +225,11 @@ export default function Ajustes({ onEditPaciente }) {
           onChange={(e) => setBusca(e.target.value)}
         />
 
-        <button type="button" className="btn-outline btn-exportar" onClick={exportarCsv}>
+        <button
+          type="button"
+          className="btn-outline btn-exportar"
+          onClick={() => setMostrarExportar(true)}
+        >
           <Download size={16} strokeWidth={1.75} />
           Exportar CSV
         </button>
@@ -335,6 +326,8 @@ export default function Ajustes({ onEditPaciente }) {
                     <span>
                       {filtroStatus === "PENDENTES"
                         ? "Nenhum paciente pendente de ajuste."
+                        : filtroStatus === "CONCLUIDOS"
+                        ? "Nenhum ajuste concluído ainda."
                         : "Nenhum paciente na fila de ajustes."}
                     </span>
                   </div>
@@ -354,6 +347,15 @@ export default function Ajustes({ onEditPaciente }) {
             setRegistroDetalhe(null);
             carregar();
           }}
+        />
+      )}
+
+      {mostrarExportar && (
+        <ExportarAjustesModal
+          ajustes={ajustes}
+          dentistas={dentistas}
+          workspace={workspace}
+          onClose={() => setMostrarExportar(false)}
         />
       )}
     </div>
@@ -474,8 +476,4 @@ function formatDate(value) {
   if (!value) return "—";
   const [year, month, day] = value.split("-");
   return `${day}/${month}/${year}`;
-}
-
-function todayISO() {
-  return new Date().toISOString().slice(0, 10);
 }
