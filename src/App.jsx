@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Users, UserPlus, Stethoscope, Wrench, Menu, ArrowLeftRight } from "lucide-react";
+import { Users, UserPlus, Stethoscope, Wrench, Menu, ArrowLeftRight, Layers } from "lucide-react";
 import { useAuth } from "./lib/AuthContext";
 import { useWorkspace, NOME_WORKSPACE, OUTRO_WORKSPACE } from "./lib/WorkspaceContext";
 import Login from "./pages/Login";
@@ -8,6 +8,7 @@ import Busca from "./pages/Busca";
 import PacienteForm from "./pages/PacienteForm";
 import PacienteEditar from "./pages/PacienteEditar";
 import Dentistas from "./pages/Dentistas";
+import Servicos from "./pages/Servicos";
 import Ajustes from "./pages/Ajustes";
 
 const WORDMARK_WORKSPACE = {
@@ -37,6 +38,11 @@ export default function App() {
 
   function irParaDentistas() {
     setView({ name: "dentistas" });
+    setMenuAberto(false);
+  }
+
+  function irParaServicos() {
+    setView({ name: "servicos" });
     setMenuAberto(false);
   }
 
@@ -81,6 +87,14 @@ export default function App() {
         >
           <Stethoscope size={18} strokeWidth={1.75} />
           Dentistas
+        </button>
+        <button
+          type="button"
+          className={view.name === "servicos" ? "ativo" : ""}
+          onClick={irParaServicos}
+        >
+          <Layers size={18} strokeWidth={1.75} />
+          Serviços
         </button>
         <button
           type="button"
@@ -162,6 +176,7 @@ export default function App() {
           />
         )}
         {view.name === "dentistas" && <Dentistas />}
+        {view.name === "servicos" && <Servicos />}
         {view.name === "ajustes" && (
           <Ajustes onEditPaciente={(id) => setView({ name: "editar", id })} />
         )}
