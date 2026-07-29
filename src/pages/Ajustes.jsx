@@ -43,6 +43,7 @@ export default function Ajustes({ onEditPaciente }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [registroDetalhe, setRegistroDetalhe] = useState(null); // registro | null
+  const [forcarConcluido, setForcarConcluido] = useState(false);
 
   useEffect(() => {
     supabase
@@ -105,11 +106,13 @@ export default function Ajustes({ onEditPaciente }) {
     carregar();
   }, [workspace]);
 
-  async function toggleConcluido(registro) {
-    const concluido = !registro.concluido;
+  // Desmarcar é instantâneo (não precisa perguntar nada). Marcar como
+  // concluído abre o modal pra pedir data de conclusão e observação —
+  // ver onChange do checkbox mais abaixo.
+  async function desmarcarConcluido(registro) {
     const { error } = await supabase
       .from("historico_etapas")
-      .update({ concluido, concluido_em: concluido ? new Date().toISOString() : null })
+      .update({ concluido: false, concluido_em: null })
       .eq("id", registro.id);
     if (error) setError(error.message);
     else carregar();
@@ -296,7 +299,14 @@ export default function Ajustes({ onEditPaciente }) {
                     <input
                       type="checkbox"
                       checked={a.concluido}
-                      onChange={() => toggleConcluido(a)}
+                      onChange={() => {
+                        if (a.concluido) {
+                          desmarcarConcluido(a);
+                        } else {
+                          setForcarConcluido(true);
+                          setRegistroDetalhe(a);
+                        }
+                      }}
                     />
                   </label>
                 </td>
@@ -304,7 +314,10 @@ export default function Ajustes({ onEditPaciente }) {
                   <button
                     type="button"
                     className={`btn-outline btn-detalhes-ajuste${a.observacao ? " tem-observacao" : ""}`}
-                    onClick={() => setRegistroDetalhe(a)}
+                    onClick={() => {
+                      setForcarConcluido(false);
+                      setRegistroDetalhe(a);
+                    }}
                     title={a.observacao || "Adicionar dentista que fez e observação"}
                   >
                     <MessageSquare size={15} strokeWidth={1.75} />
@@ -342,9 +355,14 @@ export default function Ajustes({ onEditPaciente }) {
         <DetalheAjusteModal
           registro={registroDetalhe}
           dentistas={dentistas}
-          onClose={() => setRegistroDetalhe(null)}
+          forcarConcluido={forcarConcluido}
+          onClose={() => {
+            setRegistroDetalhe(null);
+            setForcarConcluido(false);
+          }}
           onSalvo={() => {
             setRegistroDetalhe(null);
+            setForcarConcluido(false);
             carregar();
           }}
         />
@@ -362,7 +380,7 @@ export default function Ajustes({ onEditPaciente }) {
   );
 }
 
-function DetalheAjusteModal({ registro, dentistas, onClose, onSalvo }) {
+function DetalheAjusteModal({ registro, dentistas, forcarConcluido, onClose, onSalvo }) {
   const { workspace } = useWorkspace();
   const dentistaPadrao =
     workspace === "clinica"
@@ -370,7 +388,10 @@ function DetalheAjusteModal({ registro, dentistas, onClose, onSalvo }) {
       : "";
   const [dentistaId, setDentistaId] = useState(registro.dentista_id ?? dentistaPadrao);
   const [observacao, setObservacao] = useState(registro.observacao ?? "");
-  const [concluido, setConcluido] = useState(registro.concluido);
+  const [concluido, setConcluido] = useState(forcarConcluido ? true : registro.concluido);
+  const [dataConclusao, setDataConclusao] = useState(
+    registro.concluido_em ? registro.concluido_em.slice(0, 10) : todayISO()
+  );
   const [salvando, setSalvando] = useState(false);
   const [error, setError] = useState(null);
 
@@ -383,9 +404,8 @@ function DetalheAjusteModal({ registro, dentistas, onClose, onSalvo }) {
       dentista_id: dentistaId || null,
       observacao: observacao.trim() || null,
       concluido,
+      concluido_em: concluido ? new Date(`${dataConclusao}T12:00:00`).toISOString() : null,
     };
-    if (concluido && !registro.concluido) payload.concluido_em = new Date().toISOString();
-    if (!concluido && registro.concluido) payload.concluido_em = null;
 
     const { error } = await supabase
       .from("historico_etapas")
@@ -403,7 +423,10 @@ function DetalheAjusteModal({ registro, dentistas, onClose, onSalvo }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <form className="modal-card" onClick={(e) => e.stopPropagation()} onSubmit={salvar}>
-        <h2>Detalhes do ajuste — {registro.pacientes?.nome_completo}</h2>
+        <h2>
+          {forcarConcluido ? "Concluir ajuste" : "Detalhes do ajuste"} —{" "}
+          {registro.pacientes?.nome_completo}
+        </h2>
 
         <label>
           Dentista que fez o ajuste
@@ -435,6 +458,18 @@ function DetalheAjusteModal({ registro, dentistas, onClose, onSalvo }) {
           />
           Concluído
         </label>
+
+        {concluido && (
+          <label>
+            Data de conclusão
+            <input
+              type="date"
+              value={dataConclusao}
+              onChange={(e) => setDataConclusao(e.target.value)}
+              required
+            />
+          </label>
+        )}
 
         {error && <p className="error">{error}</p>}
 
@@ -476,4 +511,8 @@ function formatDate(value) {
   if (!value) return "—";
   const [year, month, day] = value.split("-");
   return `${day}/${month}/${year}`;
+}
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
 }
