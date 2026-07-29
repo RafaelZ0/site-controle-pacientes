@@ -963,6 +963,17 @@ button:disabled {
   margin-bottom: 1.25rem;
 }
 
+.btn-detalhes-ajuste {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.btn-detalhes-ajuste.tem-observacao {
+  border-color: var(--teal);
+  color: var(--teal);
+}
+
 .dentistas-nota {
   margin-top: 1rem;
   font-size: 0.8rem;
