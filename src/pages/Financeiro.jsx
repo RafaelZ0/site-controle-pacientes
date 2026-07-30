@@ -84,9 +84,13 @@ export default function Financeiro({ tratamentoId }) {
     try {
       const { error: rpcError } = await supabase.rpc("renegociar_parcela", { p_parcela_id: parcela.id });
       if (rpcError) { setError(rpcError.message); return; }
-      const { data, error: selectError } = await supabase.from("parcelas").select("data_vencimento").eq("id", parcela.id).single();
+      const { data, error: selectError } = await supabase
+        .from("parcelas")
+        .select("numero, data_vencimento")
+        .eq("parcela_original_id", parcela.id)
+        .maybeSingle();
       if (selectError || !data) setInfo("Parcela renegociada.");
-      else setInfo(`Parcela renegociada — novo vencimento: ${formatarDataBR(data.data_vencimento)}.`);
+      else setInfo(`Parcela renegociada — nova parcela #${data.numero}, vencimento ${formatarDataBR(data.data_vencimento)}.`);
       carregar();
     } finally {
       setRenegociandoId(null);
@@ -95,8 +99,8 @@ export default function Financeiro({ tratamentoId }) {
 
   async function desfazerRenegociacao(parcela) {
     setError(null); setInfo(null);
-    const { error: updateError } = await supabase.from("parcelas").update({ renegociada: false }).eq("id", parcela.id);
-    if (updateError) { setError(updateError.message); return; }
+    const { error: rpcError } = await supabase.rpc("desfazer_renegociacao", { p_parcela_original_id: parcela.id });
+    if (rpcError) { setError(rpcError.message); return; }
     setInfo("Renegociação desfeita.");
     carregar();
   }
@@ -122,7 +126,51 @@ export default function Financeiro({ tratamentoId }) {
       <div className="form-actions"><button type="submit" disabled={salvando}>{salvando ? "Salvando..." : avisoRecalculo ? "Confirmar e salvar" : "Salvar"}</button>{avisoRecalculo && <button type="button" className="btn-outline" onClick={() => setAvisoRecalculo(false)} disabled={salvando}>Voltar</button>}</div>
     </form>
     <table className="cp-table financeiro-tabela"><thead><tr><th>Tipo</th><th>#</th><th>Vencimento</th><th>Paga</th><th>Renegociação</th></tr></thead><tbody>
-      {parcelasVisiveis.map((p) => <tr key={p.id} className={p.paga ? "cp-row-paga" : p.data_vencimento < hoje ? "cp-row-atrasada" : ""}><td>{TIPO_LABEL[p.tipo] ?? p.tipo}</td><td>{p.numero}</td><td><input className="vencimento-editavel" type="date" defaultValue={p.data_vencimento} onBlur={(e) => editarVencimento(p, e.target.value)} aria-label={`Vencimento da ${TIPO_LABEL[p.tipo]} ${p.numero}`} /></td><td><label className="check-touch"><input type="checkbox" checked={p.paga} onChange={() => toggleParcela(p)} /></label></td><td>{p.renegociada ? <><span className="badge badge-renegociada">Renegociada</span> <button type="button" className="link-botao" onClick={() => desfazerRenegociacao(p)}>Desfazer</button></> : !p.paga ? <button type="button" className="btn-outline" onClick={() => renegociarParcela(p)} disabled={renegociandoId === p.id}>{renegociandoId === p.id ? "Renegociando..." : "Renegociar"}</button> : null}</td></tr>)}
+      {parcelasVisiveis.map((p) => {
+        const novaParcela = p.renegociada ? parcelas.find((x) => x.parcela_original_id === p.id) : null;
+        const original = p.parcela_original_id ? parcelas.find((x) => x.id === p.parcela_original_id) : null;
+        const maxNumeroMesmoTipo = Math.max(...parcelas.filter((x) => x.tipo === p.tipo).map((x) => x.numero));
+        const podeDesfazer = novaParcela && novaParcela.numero === maxNumeroMesmoTipo;
+        const entradaAVista = p.tipo === "entrada" && form.entrada_modalidade === "avista";
+        return (
+          <tr key={p.id} className={p.paga ? "cp-row-paga" : p.data_vencimento < hoje ? "cp-row-atrasada" : ""}>
+            <td>{TIPO_LABEL[p.tipo] ?? p.tipo}</td>
+            <td>{p.numero}</td>
+            <td>
+              <input
+                key={p.data_vencimento}
+                className="vencimento-editavel"
+                type="date"
+                defaultValue={p.data_vencimento}
+                onBlur={(e) => editarVencimento(p, e.target.value)}
+                aria-label={`Vencimento da ${TIPO_LABEL[p.tipo]} ${p.numero}`}
+              />
+            </td>
+            <td>
+              <label className="check-touch">
+                <input type="checkbox" checked={p.paga} disabled={p.renegociada} onChange={() => toggleParcela(p)} />
+              </label>
+            </td>
+            <td>
+              {p.renegociada ? (
+                <>
+                  <span className="badge badge-renegociada">Renegociada</span>
+                  {novaParcela && <span className="label-ajuda"> → parcela #{novaParcela.numero}</span>}
+                  {podeDesfazer && (
+                    <button type="button" className="link-botao" onClick={() => desfazerRenegociacao(p)}>Desfazer</button>
+                  )}
+                </>
+              ) : p.parcela_original_id ? (
+                <span className="label-ajuda">Renegociação da parcela #{original ? original.numero : "?"}</span>
+              ) : !p.paga && !entradaAVista ? (
+                <button type="button" className="btn-outline" onClick={() => renegociarParcela(p)} disabled={renegociandoId === p.id}>
+                  {renegociandoId === p.id ? "Renegociando..." : "Renegociar"}
+                </button>
+              ) : null}
+            </td>
+          </tr>
+        );
+      })}
       {parcelas.length === 0 && <tr><td colSpan={5} className="estado-vazio"><div className="estado-vazio-conteudo"><span>Nenhuma parcela ainda — preencha o formulário acima.</span></div></td></tr>}
     </tbody></table>
     {parcelas.length > LIMITE_PADRAO && <button type="button" className="btn-outline ver-todas" onClick={() => setVerTodas((v) => !v)}>{verTodas ? "Mostrar menos" : `Ver todas as ${parcelas.length}`}</button>}
