@@ -14,7 +14,6 @@ const PRIORIDADE_CONSULTA = { "EM ATRASO": 0, "EM DIA": 1, REALIZADA: 2 };
 export default function ConsultasParcelas({ tratamentoId }) {
   const [consultas, setConsultas] = useState([]);
   const [numConsultas, setNumConsultas] = useState(0);
-  const [novoNumConsultas, setNovoNumConsultas] = useState("");
   const [salvandoNumConsultas, setSalvandoNumConsultas] = useState(false);
   const [regenerando, setRegenerando] = useState(false);
   const [error, setError] = useState(null);
@@ -49,7 +48,6 @@ export default function ConsultasParcelas({ tratamentoId }) {
     if (t.error) setError(t.error.message);
     else {
       setNumConsultas(t.data.num_consultas);
-      setNovoNumConsultas(String(t.data.num_consultas));
     }
   }
 
@@ -65,12 +63,11 @@ export default function ConsultasParcelas({ tratamentoId }) {
       );
   }, [tratamentoId]);
 
-  async function salvarNumConsultas(e) {
-    e.preventDefault();
+  async function adicionarConsulta() {
     setError(null);
     setInfo(null);
 
-    const novo = Number(novoNumConsultas);
+    const novo = numConsultas + 1;
     if (novo < numConsultas) {
       setError("O nº de consultas não pode diminuir — só aumentar.");
       return;
@@ -222,23 +219,22 @@ export default function ConsultasParcelas({ tratamentoId }) {
       {error && <p className="error">{error}</p>}
       {info && <p className="info">{info}</p>}
 
-      <form className="num-consultas-form" onSubmit={salvarNumConsultas}>
+      <form className="num-consultas-form" onSubmit={adicionarConsulta}>
         <label>
-          Nº de consultas
+          Consultas planejadas pelo serviço: {numConsultas}
           <input
-            type="number"
+            type="hidden"
             min={numConsultas}
-            value={novoNumConsultas}
-            onChange={(e) => setNovoNumConsultas(e.target.value)}
+            value={numConsultas}
+            readOnly
           />
           <span className="label-ajuda">
-            Só pode aumentar — a consulta nova é calculada a partir da última
-            (data real se já realizada, +6 meses se for logo após o
-            implante).
+            A quantidade inicial é definida pelo serviço. A consulta extra é
+            calculada a partir da última data (real, quando houver).
           </span>
         </label>
-        <button type="submit" disabled={salvandoNumConsultas || Number(novoNumConsultas) === numConsultas}>
-          {salvandoNumConsultas ? "Salvando..." : "Salvar"}
+        <button type="submit" disabled={salvandoNumConsultas}>
+          {salvandoNumConsultas ? "Adicionando..." : "+ Adicionar consulta"}
         </button>
       </form>
 

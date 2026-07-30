@@ -1370,6 +1370,28 @@ button:disabled {
   border-color: var(--navy);
 }
 
+.financeiro-grupo {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem;
+  margin: 0 0 1rem;
+}
+
+.financeiro-grupo legend {
+  padding: 0 0.35rem;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.vencimento-editavel {
+  width: 145px;
+  min-height: 34px;
+}
+
+.consultas-parcelas .regenerar-plano {
+  display: none;
+}
+
 .paciente-status {
   display: flex;
   flex-direction: column;
