@@ -861,6 +861,11 @@ button:disabled {
   color: var(--status-alerta-text);
 }
 
+.badge-renegociada {
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
+}
+
 /* Agrupamento de cor por etapa do tratamento — ver etapaBadgeClasse em
    lib/constants.js. Inicial (azul) → andamento (teal) → atenção/retrabalho
    (vermelho) → concluído (verde), pra dar de identificar a fase geral de
