@@ -81,8 +81,9 @@ export default function Financeiro({ tratamentoId }) {
     setError(null); setInfo(null);
     const { error: rpcError } = await supabase.rpc("renegociar_parcela", { p_parcela_id: parcela.id });
     if (rpcError) { setError(rpcError.message); return; }
-    const { data } = await supabase.from("parcelas").select("data_vencimento").eq("id", parcela.id).single();
-    setInfo(`Parcela renegociada — novo vencimento: ${formatarDataBR(data.data_vencimento)}.`);
+    const { data, error: selectError } = await supabase.from("parcelas").select("data_vencimento").eq("id", parcela.id).single();
+    if (selectError || !data) setInfo("Parcela renegociada.");
+    else setInfo(`Parcela renegociada — novo vencimento: ${formatarDataBR(data.data_vencimento)}.`);
     carregar();
   }
 
