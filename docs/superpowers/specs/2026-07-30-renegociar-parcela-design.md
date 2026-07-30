@@ -61,6 +61,20 @@ sistema) — o cálculo do "final da fila" olha só pras parcelas do mesmo
 `renegociada = false`. A data de vencimento não volta ao que era — fica onde
 a renegociação deixou, só o selo visual some.
 
+## Ajuste em `recalcular_parcelas_tratamento`
+
+Hoje essa função reescreve o vencimento de **todas** as parcelas do
+tratamento a partir da data-âncora (`entrada_vencimento` /
+`primeira_parcela_vencimento`), preservando só `paga`/`data_pagamento`. Sem
+ajuste, ela apagaria qualquer renegociação assim que alguém salvasse de novo
+o formulário de Financeiro daquele tratamento.
+
+Ajuste: a função passa a **pular parcelas com `renegociada = true`** —
+preserva a `data_vencimento` delas (igual já preserva `paga`/`data_pagamento`)
+e não conta essas linhas na progressão mensal das demais (a régua das
+parcelas não-renegociadas continua andando mês a mês normalmente a partir da
+âncora, só ignorando as linhas renegociadas na hora de escrever).
+
 ## Tela (`src/pages/Financeiro.jsx`)
 
 Nova coluna na tabela de parcelas (hoje: Tipo | # | Vencimento | Paga):
@@ -97,4 +111,6 @@ paga depois — é histórico, não se apaga sozinho.
 Antes de subir pra produção: criar tratamento `__TESTE_TEMP__` via MCP do
 Supabase com algumas parcelas de teste, chamar `renegociar_parcela` numa
 delas, conferir que a data bateu com "maior vencimento + 1 mês" e que o flag
-ficou `true`, testar o "Desfazer", depois apagar todos os dados de teste.
+ficou `true`, testar o "Desfazer", chamar `recalcular_parcelas_tratamento` em
+seguida e confirmar que a parcela renegociada manteve sua data (não voltou
+pra régua normal), depois apagar todos os dados de teste.
