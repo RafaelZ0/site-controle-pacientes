@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../supabaseClient";
-import { normalizarParcelasEntrada } from "../lib/financeiro";
+import { normalizarParcelasEntrada, formatarDataBR } from "../lib/financeiro";
 
 const TIPO_LABEL = { entrada: "Entrada", tratamento: "Tratamento" };
 const LIMITE_PADRAO = 6;
@@ -77,6 +77,23 @@ export default function Financeiro({ tratamentoId }) {
     if (updateError) setError(updateError.message); else setInfo("Vencimento atualizado.");
   }
 
+  async function renegociarParcela(parcela) {
+    setError(null); setInfo(null);
+    const { error: rpcError } = await supabase.rpc("renegociar_parcela", { p_parcela_id: parcela.id });
+    if (rpcError) { setError(rpcError.message); return; }
+    const { data } = await supabase.from("parcelas").select("data_vencimento").eq("id", parcela.id).single();
+    setInfo(`Parcela renegociada — novo vencimento: ${formatarDataBR(data.data_vencimento)}.`);
+    carregar();
+  }
+
+  async function desfazerRenegociacao(parcela) {
+    setError(null); setInfo(null);
+    const { error: updateError } = await supabase.from("parcelas").update({ renegociada: false }).eq("id", parcela.id);
+    if (updateError) { setError(updateError.message); return; }
+    setInfo("Renegociação desfeita.");
+    carregar();
+  }
+
   const hoje = todayISO();
   const parcelasOrdenadas = [...parcelas].sort((a, b) => (a.tipo === b.tipo ? 0 : a.tipo === "entrada" ? -1 : 1) || a.numero - b.numero);
   const parcelasVisiveis = verTodas ? parcelasOrdenadas : parcelasOrdenadas.slice(0, LIMITE_PADRAO);
@@ -97,9 +114,9 @@ export default function Financeiro({ tratamentoId }) {
       {avisoRecalculo && <div className="aviso-recalculo">Isso recalcula todos os vencimentos, inclusive os das parcelas pagas. As marcações de pagamento e suas datas serão preservadas.</div>}
       <div className="form-actions"><button type="submit" disabled={salvando}>{salvando ? "Salvando..." : avisoRecalculo ? "Confirmar e salvar" : "Salvar"}</button>{avisoRecalculo && <button type="button" className="btn-outline" onClick={() => setAvisoRecalculo(false)} disabled={salvando}>Voltar</button>}</div>
     </form>
-    <table className="cp-table financeiro-tabela"><thead><tr><th>Tipo</th><th>#</th><th>Vencimento</th><th>Paga</th></tr></thead><tbody>
-      {parcelasVisiveis.map((p) => <tr key={p.id} className={p.paga ? "cp-row-paga" : p.data_vencimento < hoje ? "cp-row-atrasada" : ""}><td>{TIPO_LABEL[p.tipo] ?? p.tipo}</td><td>{p.numero}</td><td><input className="vencimento-editavel" type="date" defaultValue={p.data_vencimento} onBlur={(e) => editarVencimento(p, e.target.value)} aria-label={`Vencimento da ${TIPO_LABEL[p.tipo]} ${p.numero}`} /></td><td><label className="check-touch"><input type="checkbox" checked={p.paga} onChange={() => toggleParcela(p)} /></label></td></tr>)}
-      {parcelas.length === 0 && <tr><td colSpan={4} className="estado-vazio"><div className="estado-vazio-conteudo"><span>Nenhuma parcela ainda — preencha o formulário acima.</span></div></td></tr>}
+    <table className="cp-table financeiro-tabela"><thead><tr><th>Tipo</th><th>#</th><th>Vencimento</th><th>Paga</th><th>Renegociação</th></tr></thead><tbody>
+      {parcelasVisiveis.map((p) => <tr key={p.id} className={p.paga ? "cp-row-paga" : p.data_vencimento < hoje ? "cp-row-atrasada" : ""}><td>{TIPO_LABEL[p.tipo] ?? p.tipo}</td><td>{p.numero}</td><td><input className="vencimento-editavel" type="date" defaultValue={p.data_vencimento} onBlur={(e) => editarVencimento(p, e.target.value)} aria-label={`Vencimento da ${TIPO_LABEL[p.tipo]} ${p.numero}`} /></td><td><label className="check-touch"><input type="checkbox" checked={p.paga} onChange={() => toggleParcela(p)} /></label></td><td>{p.renegociada ? <><span className="badge badge-renegociada">Renegociada</span> <button type="button" className="link-botao" onClick={() => desfazerRenegociacao(p)}>Desfazer</button></> : !p.paga ? <button type="button" className="btn-outline" onClick={() => renegociarParcela(p)}>Renegociar</button> : null}</td></tr>)}
+      {parcelas.length === 0 && <tr><td colSpan={5} className="estado-vazio"><div className="estado-vazio-conteudo"><span>Nenhuma parcela ainda — preencha o formulário acima.</span></div></td></tr>}
     </tbody></table>
     {parcelas.length > LIMITE_PADRAO && <button type="button" className="btn-outline ver-todas" onClick={() => setVerTodas((v) => !v)}>{verTodas ? "Mostrar menos" : `Ver todas as ${parcelas.length}`}</button>}
   </div>;
