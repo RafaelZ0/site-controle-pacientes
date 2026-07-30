@@ -130,7 +130,7 @@ export default function Financeiro({ tratamentoId }) {
         const novaParcela = p.renegociada ? parcelas.find((x) => x.parcela_original_id === p.id) : null;
         const original = p.parcela_original_id ? parcelas.find((x) => x.id === p.parcela_original_id) : null;
         const maxNumeroMesmoTipo = Math.max(...parcelas.filter((x) => x.tipo === p.tipo).map((x) => x.numero));
-        const podeDesfazer = novaParcela && novaParcela.numero === maxNumeroMesmoTipo;
+        const podeDesfazer = novaParcela && novaParcela.numero === maxNumeroMesmoTipo && !novaParcela.paga;
         const entradaAVista = p.tipo === "entrada" && form.entrada_modalidade === "avista";
         return (
           <tr key={p.id} className={p.paga ? "cp-row-paga" : p.data_vencimento < hoje ? "cp-row-atrasada" : ""}>
@@ -144,6 +144,7 @@ export default function Financeiro({ tratamentoId }) {
                 defaultValue={p.data_vencimento}
                 onBlur={(e) => editarVencimento(p, e.target.value)}
                 aria-label={`Vencimento da ${TIPO_LABEL[p.tipo]} ${p.numero}`}
+                disabled={p.renegociada}
               />
             </td>
             <td>
@@ -157,7 +158,7 @@ export default function Financeiro({ tratamentoId }) {
                   <span className="badge badge-renegociada">Renegociada</span>
                   {novaParcela && <span className="label-ajuda"> → parcela #{novaParcela.numero}</span>}
                   {podeDesfazer && (
-                    <button type="button" className="link-botao" onClick={() => desfazerRenegociacao(p)}>Desfazer</button>
+                    <>{" "}<button type="button" className="link-botao" onClick={() => desfazerRenegociacao(p)}>Desfazer</button></>
                   )}
                 </>
               ) : p.parcela_original_id ? (
