@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Check, Calendar } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { ETAPAS } from "../lib/constants";
+import { calcularProgressoPagamento } from "../lib/financeiro";
 import { useWorkspace } from "../lib/WorkspaceContext";
 
 const formInicial = { dentista_id: "", data: "", observacao: "", consulta_id: "" };
@@ -12,6 +13,7 @@ export default function HistoricoEtapas({ tratamentoId }) {
   const [dentistas, setDentistas] = useState([]);
   const [dentistaPadrao, setDentistaPadrao] = useState("");
   const [consultas, setConsultas] = useState([]);
+  const [parcelas, setParcelas] = useState([]);
   const [error, setError] = useState(null);
 
   const [modalEtapa, setModalEtapa] = useState(null); // string | null
@@ -54,6 +56,12 @@ export default function HistoricoEtapas({ tratamentoId }) {
       .eq("tratamento_id", tratamentoId)
       .order("numero")
       .then(({ data }) => setConsultas(data ?? []));
+
+    supabase
+      .from("parcelas")
+      .select("paga")
+      .eq("tratamento_id", tratamentoId)
+      .then(({ data }) => setParcelas(data ?? []));
 
     carregar();
   }, [tratamentoId, workspace]);
@@ -151,6 +159,15 @@ export default function HistoricoEtapas({ tratamentoId }) {
 
   const etapasRegistradas = new Set(historico.map((h) => h.etapa)).size;
 
+  const totalParcelas = parcelas.length;
+  const parcelasPagas = parcelas.filter((p) => p.paga).length;
+  const progressoPagamento = calcularProgressoPagamento({
+    etapasRegistradas,
+    totalEtapas: ETAPAS.length,
+    parcelasPagas,
+    totalParcelas,
+  });
+
   return (
     <div className="historico-etapas">
       <h3>Etapas do tratamento</h3>
@@ -167,6 +184,22 @@ export default function HistoricoEtapas({ tratamentoId }) {
           {etapasRegistradas} de {ETAPAS.length} etapas registradas
         </span>
       </div>
+
+      {totalParcelas > 0 && (
+        <div className="pagamento-progresso">
+          <div className="pagamento-progresso-trilho">
+            <div
+              className={`pagamento-progresso-preenchido ${
+                progressoPagamento.cor !== "neutro" ? `pagamento-progresso-preenchido--${progressoPagamento.cor}` : ""
+              }`}
+              style={{ width: `${progressoPagamento.percentPago}%` }}
+            />
+          </div>
+          <span className="pagamento-progresso-texto">
+            {Math.round(progressoPagamento.percentPago)}% pago (esperado ~{Math.round(progressoPagamento.esperado)}% nesta etapa)
+          </span>
+        </div>
+      )}
 
       <div className="etapas-chips">
         {ETAPAS.map((etapa) => {
