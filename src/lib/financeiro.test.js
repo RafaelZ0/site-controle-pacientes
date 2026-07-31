@@ -66,3 +66,13 @@ test("calcularProgressoPagamento: diferenca exatamente -15 ainda é neutro (limi
   assert.equal(r.diferenca, -15);
   assert.equal(r.cor, "neutro");
 });
+
+// Invariante que a query em HistoricoEtapas.jsx precisa preservar: parcelas
+// renegociadas (renegociada = true) nunca podem entrar em parcelasPagas/totalParcelas,
+// senão um tratamento totalmente quitado deixa de mostrar 100%. Esta função pura
+// já está correta dado um input correto — o bug estava na query (faltava
+// .eq("renegociada", false)), não aqui. Este teste apenas documenta o invariante.
+test("calcularProgressoPagamento: tratamento totalmente pago é 100%", () => {
+  const r = calcularProgressoPagamento({ etapasRegistradas: 10, totalEtapas: 10, parcelasPagas: 5, totalParcelas: 5 });
+  assert.equal(r.percentPago, 100);
+});

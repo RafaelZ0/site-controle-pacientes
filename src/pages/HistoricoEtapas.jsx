@@ -61,6 +61,7 @@ export default function HistoricoEtapas({ tratamentoId }) {
       .from("parcelas")
       .select("paga")
       .eq("tratamento_id", tratamentoId)
+      .eq("renegociada", false)
       .then(({ data }) => setParcelas(data ?? []));
 
     carregar();
@@ -189,9 +190,11 @@ export default function HistoricoEtapas({ tratamentoId }) {
         <div className="pagamento-progresso">
           <div className="pagamento-progresso-trilho">
             <div
-              className={`pagamento-progresso-preenchido ${
-                progressoPagamento.cor !== "neutro" ? `pagamento-progresso-preenchido--${progressoPagamento.cor}` : ""
-              }`}
+              className={
+                progressoPagamento.cor !== "neutro"
+                  ? `pagamento-progresso-preenchido pagamento-progresso-preenchido--${progressoPagamento.cor}`
+                  : "pagamento-progresso-preenchido"
+              }
               style={{ width: `${progressoPagamento.percentPago}%` }}
             />
           </div>
